@@ -377,3 +377,31 @@ Sebelum lanjut:
 
 Lanjut ke: 04-deep-learning/01_neural_net_scratch.py
 """)
+
+
+# ===========================================================
+# MILESTONE ASSESSMENT — 3.3 Feature Engineering
+# ===========================================================
+# Referensi lengkap: ASSESSMENT.md (Fase 3, bagian 3.3)
+#
+# Level 1 — Bisa Dikerjakan (timer: 30 menit):
+#   [ ] StandardScaler, MinMaxScaler, log transform pada data skewed
+#   [ ] Time-domain features: mean, std, min, max, skewness, kurtosis
+#   [ ] Frequency-domain features: dominant freq, spectral energy
+#
+# Level 2 — Bisa Dijelaskan:
+#   [ ] StandardScaler vs MinMaxScaler vs RobustScaler — kapan mana?
+#   [ ] Kenapa feature engineering sering lebih impactful dari model?
+#   [ ] Feature selection: filter vs wrapper vs embedded
+#
+# Level 3 — Bisa Improvisasi (timer: 60 menit):
+#   [ ] Domain-specific EE features (power factor, THD, crest factor, dll)
+#   [ ] Build feature pipeline: raw -> features -> selection -> ML-ready
+#   [ ] Bandingkan 3 feature selection methods + analisis
+#
+# SKOR: ___/27
+# TARGET PD: minimal 18/27 (rata-rata 2.0)
+#
+# === TOTAL FASE 3: ___/84 ===
+# Siap lanjut ke Fase 4? (minimal 56/84 = 67%): [ ] YA / [ ] BELUM
+# ===========================================================

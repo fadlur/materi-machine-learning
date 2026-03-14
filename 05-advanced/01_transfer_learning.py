@@ -241,3 +241,28 @@ Skenario realistis:
 print("\n" + "="*50)
 print("✅ Modul selesai! Lanjut ke: 05-advanced/02_nlp_transformers.py")
 print("="*50)
+
+
+# ===========================================================
+# MILESTONE ASSESSMENT — 5.1 Transfer Learning
+# ===========================================================
+# Referensi lengkap: ASSESSMENT.md (Fase 5, bagian 5.1)
+#
+# Level 1 — Bisa Dikerjakan (timer: 30 menit):
+#   [ ] Load pretrained ResNet, ganti final layer, train
+#   [ ] Freeze/unfreeze: feature extraction vs fine-tuning
+#   [ ] Plot learning curves, bandingkan strategi
+#
+# Level 2 — Bisa Dijelaskan:
+#   [ ] Feature extraction vs fine-tuning — buat decision tree
+#   [ ] Kenapa ImageNet pretrained berguna untuk task lain?
+#   [ ] Risiko fine-tuning pada dataset kecil? Mitigasi?
+#
+# Level 3 — Bisa Improvisasi (timer: 45 menit):
+#   [ ] Gradual unfreezing strategy
+#   [ ] Transfer learning untuk 1D signal / time series
+#   [ ] Domain adaptation: source != target domain
+#
+# SKOR: ___/27
+# TARGET PD: minimal 18/27 (rata-rata 2.0)
+# ===========================================================

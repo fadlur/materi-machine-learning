@@ -407,3 +407,29 @@ Ini adalah mini-project yang menggabungkan semua yang sudah dipelajari!
 print("\n" + "="*50)
 print("✅ Modul selesai! Lanjut ke: 02-ml-dari-nol/02_logistic_regression_scratch.py")
 print("="*50)
+
+
+# ===========================================================
+# MILESTONE ASSESSMENT — 2.1 Linear Regression from Scratch
+# ===========================================================
+# Referensi lengkap: ASSESSMENT.md (Fase 2, bagian 2.1)
+#
+# Level 1 — Bisa Dikerjakan (timer: 45 menit):
+#   [ ] Implementasi linear regression dengan Normal Equation
+#   [ ] Implementasi linear regression dengan Gradient Descent
+#   [ ] Hitung R-squared, MSE, MAE secara manual
+#
+# Level 2 — Bisa Dijelaskan:
+#   [ ] Kapan Normal Equation lebih baik dari GD? Sebaliknya?
+#   [ ] Efek learning rate terlalu besar vs terlalu kecil?
+#   [ ] Overfitting pada polynomial regression — kenapa degree tinggi berbahaya?
+#   [ ] Bedanya Ridge (L2) vs Lasso (L1)? Kapan pakai mana?
+#
+# Level 3 — Bisa Improvisasi (timer: 60 menit):
+#   [ ] L2 regularization ke GD implementation
+#   [ ] Mini-batch GD dengan learning rate decay
+#   [ ] K-fold cross-validation secara manual
+#
+# SKOR: ___/30
+# TARGET PD: minimal 20/30 (rata-rata 2.0)
+# ===========================================================

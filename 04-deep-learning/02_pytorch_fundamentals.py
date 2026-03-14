@@ -323,3 +323,28 @@ Buat model untuk memprediksi sensor data (relevant EE!):
 print("\n" + "="*50)
 print("✅ Modul selesai! Lanjut ke: 04-deep-learning/03_cnn.py")
 print("="*50)
+
+
+# ===========================================================
+# MILESTONE ASSESSMENT — 4.2 PyTorch Fundamentals
+# ===========================================================
+# Referensi lengkap: ASSESSMENT.md (Fase 4, bagian 4.2)
+#
+# Level 1 — Bisa Dikerjakan (timer: 30 menit):
+#   [ ] Definisi model pakai nn.Module + nn.Sequential
+#   [ ] Training loop: DataLoader, optimizer, loss, train()/eval()
+#   [ ] Save dan load model (state_dict)
+#
+# Level 2 — Bisa Dijelaskan:
+#   [ ] requires_grad dan cara kerja autograd
+#   [ ] Kenapa model.eval() dan torch.no_grad() saat inference?
+#   [ ] DataLoader: batch_size, shuffle, num_workers, pin_memory
+#
+# Level 3 — Bisa Improvisasi (timer: 45 menit):
+#   [ ] Custom Dataset class
+#   [ ] Custom loss function (Focal Loss)
+#   [ ] LR scheduler: CosineAnnealing + warmup
+#
+# SKOR: ___/27
+# TARGET PD: minimal 18/27 (rata-rata 2.0)
+# ===========================================================

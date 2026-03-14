@@ -436,3 +436,31 @@ Sebelum lanjut ke Fase 3, pastikan:
 
 Lanjut ke: 03-classical-ml/01_supervised_learning.py
 """)
+
+
+# ===========================================================
+# MILESTONE ASSESSMENT — 2.4 Evaluasi Model
+# ===========================================================
+# Referensi lengkap: ASSESSMENT.md (Fase 2, bagian 2.4)
+#
+# Level 1 — Bisa Dikerjakan (timer: 30 menit):
+#   [ ] Confusion matrix, precision, recall, F1 secara manual
+#   [ ] K-fold cross-validation
+#   [ ] Proper train/test split (+ jelaskan kenapa beda untuk time series)
+#
+# Level 2 — Bisa Dijelaskan:
+#   [ ] 5 sumber data leakage dan pencegahannya
+#   [ ] Kapan stratified k-fold vs regular vs time series split?
+#   [ ] Bias-variance tradeoff: apa berubah kalau model makin complex?
+#
+# Level 3 — Bisa Improvisasi (timer: 45 menit):
+#   [ ] Nested cross-validation
+#   [ ] Grid search dengan preprocessing di dalam CV loop
+#   [ ] Normalisasi SETELAH split — demo dampaknya
+#
+# SKOR: ___/27
+# TARGET PD: minimal 18/27 (rata-rata 2.0)
+#
+# === TOTAL FASE 2: ___/111 ===
+# Siap lanjut ke Fase 3? (minimal 74/111 = 67%): [ ] YA / [ ] BELUM
+# ===========================================================

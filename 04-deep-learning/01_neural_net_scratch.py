@@ -351,3 +351,28 @@ Ini fondasi untuk memahami kenapa deep learning bekerja!
 print("\n" + "="*50)
 print("✅ Modul selesai! Lanjut ke: 04-deep-learning/02_pytorch_fundamentals.py")
 print("="*50)
+
+
+# ===========================================================
+# MILESTONE ASSESSMENT — 4.1 Neural Network from Scratch
+# ===========================================================
+# Referensi lengkap: ASSESSMENT.md (Fase 4, bagian 4.1)
+#
+# Level 1 — Bisa Dikerjakan (timer: 60 menit):
+#   [ ] Forward propagation: input -> hidden (ReLU) -> output (sigmoid)
+#   [ ] Backpropagation: hitung gradient untuk setiap layer
+#   [ ] Training loop: init -> forward -> loss -> backward -> update
+#
+# Level 2 — Bisa Dijelaskan:
+#   [ ] Chain rule dalam konteks backprop — gambar computation graph
+#   [ ] Vanishing gradient: kenapa terjadi dengan sigmoid?
+#   [ ] He vs Xavier initialization: kapan pakai masing-masing?
+#
+# Level 3 — Bisa Improvisasi (timer: 45 menit):
+#   [ ] Batch normalization dari scratch
+#   [ ] Dropout dari scratch (beda train vs eval)
+#   [ ] Gradient checking untuk verifikasi backprop
+#
+# SKOR: ___/27
+# TARGET PD: minimal 18/27 (rata-rata 2.0)
+# ===========================================================

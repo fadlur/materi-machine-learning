@@ -221,3 +221,28 @@ Lebih baik punya pipeline yang solid daripada model yang fancy.
 print("\n" + "="*50)
 print("✅ Modul 2 selesai! Lanjut ke: 01-fondasi-data/03_visualisasi.py")
 print("="*50)
+
+
+# ===========================================================
+# MILESTONE ASSESSMENT — 1.2 Pandas Essentials
+# ===========================================================
+# Referensi lengkap: ASSESSMENT.md (Fase 1, bagian 1.2)
+#
+# Level 1 — Bisa Dikerjakan (timer: 30 menit):
+#   [ ] Load CSV, cek missing values, handle dengan strategy tepat
+#   [ ] Groupby + aggregasi: mean, std, count per kategori
+#   [ ] Buat 3 feature baru: rolling mean, lag feature, rate of change
+#
+# Level 2 — Bisa Dijelaskan:
+#   [ ] Kapan fillna(mean) vs interpolate vs drop? Trade-off?
+#   [ ] Bedanya loc vs iloc vs at vs iat
+#   [ ] Kenapa concat lebih baik dari append dalam loop?
+#
+# Level 3 — Bisa Improvisasi (timer: 45 menit):
+#   [ ] Function: raw DataFrame -> ML-ready (X, y) dengan semua preprocessing
+#   [ ] Handle mixed types: numeric scaling + categorical encoding
+#   [ ] Detect dan handle outlier menggunakan IQR method
+#
+# SKOR: ___/27
+# TARGET PD: minimal 18/27 (rata-rata 2.0)
+# ===========================================================

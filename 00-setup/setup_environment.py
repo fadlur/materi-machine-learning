@@ -87,3 +87,19 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# ===========================================================
+# MILESTONE ASSESSMENT — FASE 0: Setup
+# ===========================================================
+# Referensi lengkap: ASSESSMENT.md
+#
+# Checklist (Pass/Fail) — Semua harus bisa TANPA tutorial:
+#   [ ] Setup Python environment (venv/conda) dari nol
+#   [ ] Install semua dependency dari requirements.txt
+#   [ ] Setup git repo + .gitignore yang proper untuk ML project
+#   [ ] Jalankan Jupyter notebook dan Python script interaktif
+#
+# STATUS: ___/4 checklist terpenuhi
+# Boleh lanjut ke Fase 1? (harus 4/4): [ ] YA / [ ] BELUM
+# ===========================================================

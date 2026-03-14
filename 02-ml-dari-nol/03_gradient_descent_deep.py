@@ -419,3 +419,28 @@ dan kenapa Adam biasanya bekerja paling baik.
 print("\n" + "="*50)
 print("✅ Modul selesai! Lanjut ke: 02-ml-dari-nol/04_evaluasi_model.py")
 print("="*50)
+
+
+# ===========================================================
+# MILESTONE ASSESSMENT — 2.3 Gradient Descent Deep Dive
+# ===========================================================
+# Referensi lengkap: ASSESSMENT.md (Fase 2, bagian 2.3)
+#
+# Level 1 — Bisa Dikerjakan (timer: 30 menit):
+#   [ ] Implementasi vanilla GD, SGD, dan mini-batch GD
+#   [ ] Plot loss curve perbandingan ketiganya
+#   [ ] Implementasi momentum
+#
+# Level 2 — Bisa Dijelaskan:
+#   [ ] Kenapa SGD lebih zig-zag tapi bisa escape local minima?
+#   [ ] Peran momentum? Analogikan dengan fisika/kontrol
+#   [ ] Adam: apa yang di-track? Kenapa butuh bias correction?
+#
+# Level 3 — Bisa Improvisasi (timer: 45 menit):
+#   [ ] Adam optimizer dari scratch
+#   [ ] Learning rate scheduler: cosine annealing
+#   [ ] Visualisasi trajectory di 2D loss surface
+#
+# SKOR: ___/27
+# TARGET PD: minimal 18/27 (rata-rata 2.0)
+# ===========================================================

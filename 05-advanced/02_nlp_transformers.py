@@ -328,3 +328,29 @@ Gabungkan expertise EE + state-of-the-art ML:
 print("\n" + "="*50)
 print("✅ Modul selesai! Lanjut ke: 05-advanced/03_generative_models.py")
 print("="*50)
+
+
+# ===========================================================
+# MILESTONE ASSESSMENT — 5.2 NLP & Transformers
+# ===========================================================
+# Referensi lengkap: ASSESSMENT.md (Fase 5, bagian 5.2)
+#
+# Level 1 — Bisa Dikerjakan (timer: 45 menit):
+#   [ ] Self-attention dari scratch (Q, K, V, scaled dot-product)
+#   [ ] Fine-tune BERT via Hugging Face
+#   [ ] Visualisasi attention weights
+#
+# Level 2 — Bisa Dijelaskan:
+#   [ ] Self-attention step-by-step. Kenapa "scaled"?
+#   [ ] Encoder-only (BERT) vs decoder-only (GPT) vs encoder-decoder (T5)
+#   [ ] Kenapa Transformer > RNN? Kelemahannya?
+#   [ ] Positional encoding: kenapa perlu? Cara kerja?
+#
+# Level 3 — Bisa Improvisasi (timer: 60 menit):
+#   [ ] Transformer classifier dari scratch
+#   [ ] Transformer untuk non-text: sinyal, time series
+#   [ ] Patch embedding untuk 1D signal
+#
+# SKOR: ___/30
+# TARGET PD: minimal 20/30 (rata-rata 2.0)
+# ===========================================================

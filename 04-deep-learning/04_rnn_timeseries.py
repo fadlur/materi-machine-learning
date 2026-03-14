@@ -354,3 +354,31 @@ Sebelum lanjut:
 
 Lanjut ke: 05-advanced/01_transfer_learning.py
 """)
+
+
+# ===========================================================
+# MILESTONE ASSESSMENT — 4.4 RNN & Time Series
+# ===========================================================
+# Referensi lengkap: ASSESSMENT.md (Fase 4, bagian 4.4)
+#
+# Level 1 — Bisa Dikerjakan (timer: 45 menit):
+#   [ ] Build LSTM model dengan PyTorch untuk time series
+#   [ ] Sliding window dataset (sequence -> next value)
+#   [ ] Train + evaluate: plot actual vs predicted
+#
+# Level 2 — Bisa Dijelaskan:
+#   [ ] LSTM cell: forget gate, input gate, output gate — gambar
+#   [ ] Kenapa LSTM mengatasi vanishing gradient? Peran cell state?
+#   [ ] LSTM vs GRU: bedanya? Kapan pilih mana?
+#
+# Level 3 — Bisa Improvisasi (timer: 60 menit):
+#   [ ] Transformer untuk time series (bukan RNN)
+#   [ ] Multi-step forecasting
+#   [ ] Bandingkan LSTM vs GRU vs Transformer
+#
+# SKOR: ___/27
+# TARGET PD: minimal 18/27 (rata-rata 2.0)
+#
+# === TOTAL FASE 4: ___/111 ===
+# Siap lanjut ke Fase 5? (minimal 74/111 = 67%): [ ] YA / [ ] BELUM
+# ===========================================================

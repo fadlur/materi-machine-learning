@@ -233,3 +233,28 @@ Hint: DFT formula → X[k] = Σ x[n] * exp(-j*2π*k*n/N)
 print("\n" + "="*50)
 print("✅ Modul 1 selesai! Lanjut ke: 01-fondasi-data/02_pandas_essentials.py")
 print("="*50)
+
+
+# ===========================================================
+# MILESTONE ASSESSMENT — 1.1 NumPy Essentials
+# ===========================================================
+# Referensi lengkap: ASSESSMENT.md (Fase 1, bagian 1.1)
+#
+# Level 1 — Bisa Dikerjakan (timer: 30 menit):
+#   [ ] Buat array 2D (5x3), hitung mean per kolom, z-score TANPA loop
+#   [ ] Implementasi matrix multiplication manual, bandingkan np.dot
+#   [ ] Buat boolean mask: filter elemen > mean + 1 std
+#
+# Level 2 — Bisa Dijelaskan (jawab di kepala, TANPA buka catatan):
+#   [ ] Broadcasting rules NumPy: kapan 2 array bisa di-broadcast?
+#   [ ] Kenapa vectorized operation lebih cepat dari loop?
+#   [ ] Apa bedanya .copy() vs view?
+#
+# Level 3 — Bisa Improvisasi (timer: 45 menit):
+#   [ ] Softmax yang numerically stable
+#   [ ] Cosine similarity matrix untuk batch of vectors
+#   [ ] One-hot encoding pakai NumPy saja
+#
+# SKOR: ___/27 (0=blank, 1=tahu tapi gagal, 2=bisa+googling, 3=lancar)
+# TARGET PD: minimal 18/27 (rata-rata 2.0)
+# ===========================================================

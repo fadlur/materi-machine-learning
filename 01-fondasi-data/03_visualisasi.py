@@ -283,3 +283,31 @@ print("  ✓ Challenge minimal 1 sudah dicoba")
 print("  ✓ Bisa jelaskan konsep tanpa melihat kode")
 print("\nLanjut ke: 02-ml-dari-nol/01_linear_regression_scratch.py")
 print("="*50)
+
+
+# ===========================================================
+# MILESTONE ASSESSMENT — 1.3 Visualisasi
+# ===========================================================
+# Referensi lengkap: ASSESSMENT.md (Fase 1, bagian 1.3)
+#
+# Level 1 — Bisa Dikerjakan (timer: 20 menit):
+#   [ ] Buat histogram + boxplot untuk distribusi data
+#   [ ] Buat correlation heatmap
+#   [ ] Scatter plot dengan warna berdasarkan target class
+#
+# Level 2 — Bisa Dijelaskan:
+#   [ ] Kapan histogram vs KDE vs boxplot?
+#   [ ] Cara membaca correlation heatmap — apa yang dicari?
+#   [ ] Kenapa visualisasi penting sebelum modeling? 3 contoh insight
+#
+# Level 3 — Bisa Improvisasi (timer: 30 menit):
+#   [ ] Plot decision boundary untuk arbitrary 2D classifier
+#   [ ] Multi-panel figure (2x3 subplot) untuk model evaluation
+#   [ ] Plot frequency spectrum dari time-domain signal (FFT)
+#
+# SKOR: ___/27
+# TARGET PD: minimal 18/27 (rata-rata 2.0)
+#
+# === TOTAL FASE 1: ___/81 ===
+# Siap lanjut ke Fase 2? (minimal 54/81 = 67%): [ ] YA / [ ] BELUM
+# ===========================================================

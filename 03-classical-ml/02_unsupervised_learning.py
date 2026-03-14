@@ -301,3 +301,28 @@ Ini SANGAT relevan untuk power systems engineer!
 print("\n" + "="*50)
 print("✅ Modul selesai! Lanjut ke: 03-classical-ml/03_feature_engineering.py")
 print("="*50)
+
+
+# ===========================================================
+# MILESTONE ASSESSMENT — 3.2 Unsupervised Learning
+# ===========================================================
+# Referensi lengkap: ASSESSMENT.md (Fase 3, bagian 3.2)
+#
+# Level 1 — Bisa Dikerjakan (timer: 30 menit):
+#   [ ] K-Means + tentukan k optimal (elbow + silhouette)
+#   [ ] PCA + plot explained variance + pilih jumlah komponen
+#   [ ] Isolation Forest untuk anomaly detection
+#
+# Level 2 — Bisa Dijelaskan:
+#   [ ] Kapan K-Means gagal? Alternatifnya?
+#   [ ] PCA: apa representasi eigenvalue dan eigenvector?
+#   [ ] PCA vs t-SNE: kapan pakai mana?
+#
+# Level 3 — Bisa Improvisasi (timer: 45 menit):
+#   [ ] K-Means dari scratch (+ K-means++ init)
+#   [ ] PCA + clustering pipeline
+#   [ ] Anomaly detection pipeline end-to-end
+#
+# SKOR: ___/27
+# TARGET PD: minimal 18/27 (rata-rata 2.0)
+# ===========================================================

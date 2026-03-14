@@ -383,3 +383,31 @@ Kamu sekarang bisa:
 
 Lanjut ke: 06-expert/ (Paper Implementation, MLOps, Production)
 """)
+
+
+# ===========================================================
+# MILESTONE ASSESSMENT — 5.3 Generative Models
+# ===========================================================
+# Referensi lengkap: ASSESSMENT.md (Fase 5, bagian 5.3)
+#
+# Level 1 — Bisa Dikerjakan (timer: 45 menit):
+#   [ ] Build dan train VAE pada MNIST
+#   [ ] Build dan train GAN sederhana pada MNIST
+#   [ ] Generate samples, plot hasil
+#
+# Level 2 — Bisa Dijelaskan:
+#   [ ] VAE: ELBO, reparameterization trick, KL divergence
+#   [ ] GAN: adversarial training. Kenapa training sulit?
+#   [ ] VAE vs GAN: kelebihan dan kekurangan
+#
+# Level 3 — Bisa Improvisasi (timer: 45 menit):
+#   [ ] Generative model untuk data augmentation
+#   [ ] Latent space interpolation antar 2 sample
+#   [ ] Conditional generation: generate dari class tertentu
+#
+# SKOR: ___/27
+# TARGET PD: minimal 18/27 (rata-rata 2.0)
+#
+# === TOTAL FASE 5: ___/84 ===
+# Siap lanjut ke Fase 6? (minimal 56/84 = 67%): [ ] YA / [ ] BELUM
+# ===========================================================

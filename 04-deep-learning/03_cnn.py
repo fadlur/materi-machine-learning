@@ -374,3 +374,29 @@ dengan ML (CNN) → ini competitive advantage kamu!
 print("\n" + "="*50)
 print("✅ Modul selesai! Lanjut ke: 04-deep-learning/04_rnn_timeseries.py")
 print("="*50)
+
+
+# ===========================================================
+# MILESTONE ASSESSMENT — 4.3 CNN
+# ===========================================================
+# Referensi lengkap: ASSESSMENT.md (Fase 4, bagian 4.3)
+#
+# Level 1 — Bisa Dikerjakan (timer: 45 menit):
+#   [ ] Build CNN: Conv2d -> ReLU -> BatchNorm -> MaxPool -> FC
+#   [ ] Train pada MNIST/CIFAR-10 dengan data augmentation
+#   [ ] Plot loss curve dan confusion matrix
+#
+# Level 2 — Bisa Dijelaskan:
+#   [ ] Conv layer = filter di signal processing — analogikan
+#   [ ] Hitung output size: (W - K + 2P) / S + 1
+#   [ ] Kenapa CNN > MLP untuk image/signal? (parameter sharing, invariance)
+#   [ ] Stride, padding, dilation — efek masing-masing
+#
+# Level 3 — Bisa Improvisasi (timer: 60 menit):
+#   [ ] 1D CNN untuk klasifikasi sinyal
+#   [ ] Visualisasi learned filters dan feature maps
+#   [ ] Tambahkan residual connections / skip connections
+#
+# SKOR: ___/30
+# TARGET PD: minimal 20/30 (rata-rata 2.0)
+# ===========================================================

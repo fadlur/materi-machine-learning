@@ -400,3 +400,28 @@ Buat sistem deteksi fault untuk motor listrik (relevant dengan EE!):
 print("\n" + "="*50)
 print("✅ Modul selesai! Lanjut ke: 02-ml-dari-nol/03_gradient_descent_deep.py")
 print("="*50)
+
+
+# ===========================================================
+# MILESTONE ASSESSMENT — 2.2 Logistic Regression from Scratch
+# ===========================================================
+# Referensi lengkap: ASSESSMENT.md (Fase 2, bagian 2.2)
+#
+# Level 1 — Bisa Dikerjakan (timer: 45 menit):
+#   [ ] Implementasi sigmoid function (numerically stable)
+#   [ ] Implementasi binary cross-entropy loss
+#   [ ] Logistic regression: fit dengan GD, predict_proba, predict
+#
+# Level 2 — Bisa Dijelaskan:
+#   [ ] Kenapa MSE tidak cocok untuk classification?
+#   [ ] Precision vs recall trade-off + contoh skenario
+#   [ ] Kenapa accuracy misleading pada imbalanced data?
+#
+# Level 3 — Bisa Improvisasi (timer: 60 menit):
+#   [ ] Softmax regression (multiclass)
+#   [ ] ROC curve dan AUC dari scratch
+#   [ ] Class weighting di loss function
+#
+# SKOR: ___/27
+# TARGET PD: minimal 18/27 (rata-rata 2.0)
+# ===========================================================

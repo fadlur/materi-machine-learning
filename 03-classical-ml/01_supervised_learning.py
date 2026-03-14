@@ -283,3 +283,29 @@ Simpan hasilnya di projects/project_02_klasifikasi_sinyal/
 print("\n" + "="*50)
 print("✅ Modul selesai! Lanjut ke: 03-classical-ml/02_unsupervised_learning.py")
 print("="*50)
+
+
+# ===========================================================
+# MILESTONE ASSESSMENT — 3.1 Supervised Learning
+# ===========================================================
+# Referensi lengkap: ASSESSMENT.md (Fase 3, bagian 3.1)
+#
+# Level 1 — Bisa Dikerjakan (timer: 45 menit):
+#   [ ] Train + evaluate: Decision Tree, Random Forest, SVM, GBM
+#   [ ] Plot feature importance dari Random Forest
+#   [ ] GridSearchCV untuk hyperparameter tuning
+#
+# Level 2 — Bisa Dijelaskan:
+#   [ ] Bagging (RF) vs Boosting (XGBoost) — gambar diagram
+#   [ ] Kapan SVM vs tree-based? Sebaliknya?
+#   [ ] max_depth dan hubungannya dengan overfitting
+#   [ ] Kenapa RF lebih robust dari single Decision Tree?
+#
+# Level 3 — Bisa Improvisasi (timer: 60 menit):
+#   [ ] Bandingkan 5+ model dengan proper CV + tabel + plot
+#   [ ] Analisis: model mana untuk data kecil/besar/noisy?
+#   [ ] Bayesian Optimization untuk hyperparameter
+#
+# SKOR: ___/30
+# TARGET PD: minimal 20/30 (rata-rata 2.0)
+# ===========================================================
