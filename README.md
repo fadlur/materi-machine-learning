@@ -1,94 +1,209 @@
-# 🧠 Machine Learning: From Zero to Production
+# 🧠 Machine Learning: From Zero to Production — ML Engineer Track
 
-## Filosofi Anti-Tutorial Hell
+## 🎯 Optimized for: Backend Developer → ML/AI Engineer Transition
 
-**Masalah tutorial hell:** kamu mengikuti langkah demi langkah, copy-paste kode,
-merasa paham, tapi begitu dihadapkan problem baru — blank.
-
-**Solusi kurikulum ini:**
-1. **Build First, Library Later** — bangun algoritma dari nol dengan NumPy sebelum pakai sklearn
-2. **Deliberate Practice** — setiap modul punya tantangan yang TIDAK ada jawabannya di tutorial
-3. **Project-Driven** — setiap fase berakhir dengan proyek open-ended, bukan step-by-step
-4. **Spaced Repetition** — konsep yang sama muncul di konteks berbeda di fase selanjutnya
-5. **Debug > Run** — sengaja ada kode yang salah untuk difix, karena debugging = belajar
-
-**Keunggulan latar belakang Teknik Elektro:**
-- Linear algebra, kalkulus, probabilitas → sudah kuat, tinggal mapping ke ML context
-- Signal processing → langsung relevan dengan time series, CNN (konvolusi!), feature engineering
-- Control theory → ada paralel dengan reinforcement learning & optimization
-- Pengalaman lab/riset → mindset eksperimental sudah terbentuk
+> **Versi ini di-optimasi untuk kamu yang:**
+> - Baru di-layoff dari role backend developer
+> - Sedang S2 Teknik Elektro (math & signal processing kuat)
+> - Butuh portfolio production-ready dalam 90 hari
+> - Target: Apply sebagai ML/AI Engineer dengan PD
 
 ---
 
-## Roadmap Overview
+## 🚀 Apa yang Berbeda di Track Ini?
 
+| Aspek | Kurikulum Original | ML Engineer Track (Ini) |
+|-------|-------------------|------------------------|
+| Fokus | Pemahaman teoritis | **Job-ready skills + portfolio** |
+| MLOps | Mention saja | **Hands-on wajib** (leverage backend exp!) |
+| System Design | Tidak ada | **Modul dedicated** — ML System Design Interview |
+| Interview Prep | Tidak ada | **Coding + ML Case + Behavioral** |
+| LLM/GenAI | Sebagai opsional | **Core module** — tren #1 di 2025-2026 |
+| Project Scope | Research-oriented | **Production-oriented** (API, Docker, monitoring) |
+| Timeline | 3-4 bulan santai | **90 hari fokus** dengan daily action plan |
+
+### 🎁 Keunggulan Background Backend Kamu
+
+**Jangan anggap pengalaman backend mu sia-sia — itu ASSET:**
+
+- ✅ **API Design** → REST API untuk model serving = mudah
+- ✅ **Database/SQL** → Feature engineering & data pipeline = natural
+- ✅ **Docker/CI-CD** → MLOps deployment = tinggal extend
+- ✅ **Testing** → Unit test untuk ML pipeline = transfer langsung
+- ✅ **System Design** → Distributed systems → scalable ML serving
+- ✅ **Git** → Version control untuk data & model (DVC)
+
+**Yang perlu di-build:**
+- 🔨 Math → ML algorithm mapping (linear algebra, prob, optimization)
+- 🔨 Experiment mindset → reproducible experiments
+- 🔨 Feature engineering intuition
+- 🔨 Model debugging & performance analysis
+
+---
+
+## 🗺️ Roadmap Overview: 90-Day Sprint
+
+### **PHASE 1: Foundation + Fast Wins (Hari 1-30)**
 ```
-FASE 0: Setup & Tools                    [~1 hari]
-  └── Environment, git, workflow
+FASE 0: Setup & Environment Check           [Hari 1]
+FASE 1: NumPy, Pandas, Visualisasi          [Hari 2-7]
+  └── 🏗️ Mini Project: EDA + Insight Report
+  └── 🎯 Interview: SQL & Pandas coding problems
+  
+FASE 2: ML from Scratch (NumPy Only)        [Hari 8-18]
+  └── Linear Regression, Logistic Regression, GD
+  └── 🏗️ Project 1: Prediction Pipeline + API
+  └── 🎯 Interview: ML Math fundamentals
+  
+FASE 3: Classical ML (sklearn)              [Hari 19-30]
+  └── SVM, Tree, Ensemble, Clustering, PCA
+  └── Feature Engineering deep-dive
+  └── 🏗️ Project 2: Signal Classification (EE domain!)
+  └── 🎯 Interview: Bias-Variance, Overfitting, Evaluation
+```
 
-FASE 1: Fondasi Data                     [~1 minggu]
-  └── NumPy, Pandas, Visualisasi
-  └── 🏗️ Mini Project: EDA dataset nyata
-
-FASE 2: ML dari Nol (NumPy Only!)       [~2 minggu]
-  └── Linear Regression from scratch
-  └── Logistic Regression from scratch
-  └── Gradient Descent deep-dive
-  └── Evaluasi model dari nol
-  └── 🏗️ Project 1: Prediksi + Full Pipeline
-
-FASE 3: Classical ML (sklearn)           [~2 minggu]
-  └── Supervised: SVM, Tree, Ensemble
-  └── Unsupervised: Clustering, PCA
-  └── Feature Engineering
-  └── 🏗️ Project 2: Klasifikasi Sinyal
-
-FASE 4: Deep Learning                    [~3 minggu]
-  └── Neural Net from scratch
-  └── PyTorch fundamentals
-  └── CNN (koneksi ke signal processing!)
+### **PHASE 2: Deep Learning + MLOps Foundation (Hari 31-60)**
+```
+FASE 4: Deep Learning                       [Hari 31-45]
+  └── Neural Net from scratch → PyTorch
+  └── CNN (signal processing connection!)
   └── RNN & Time Series
-  └── 🏗️ Project 3: Computer Vision
-
-FASE 5: Advanced Topics                  [~3 minggu]
+  └── 🏗️ Project 3: Computer Vision with deployment
+  └── 🎯 Interview: Backprop, CNN architecture, PyTorch API
+  
+FASE 5: Advanced Topics                     [Hari 46-55]
   └── Transfer Learning
   └── NLP & Transformers
   └── Generative Models (VAE, GAN)
-  └── 🏗️ Project 4: NLP Pipeline
+  └── 🏗️ Project 4: NLP Pipeline (Deployable!)
+  └── 🎯 Interview: Transformer architecture, Attention
+  
+FASE 6: Expert — MLOps & Production         [Hari 56-60]
+  └── Experiment Tracking (MLflow/W&B)
+  └── CI/CD for ML
+  └── Model Serving (FastAPI + Docker)
+  └── 🎯 Interview: ML System Design basics
+```
 
-FASE 6: Expert & Production              [~4 minggu]
-  └── Paper Implementation
-  └── MLOps (experiment tracking, CI/CD)
-  └── Model Serving & Deployment
-  └── 🏗️ Project 5: End-to-End ML System
+### **PHASE 3: Production ML + Career Prep (Hari 61-90)**
+```
+FASE 7: Production ML (NEW)                 [Hari 61-75]
+  └── Feature Stores & Data Versioning
+  └── Model Monitoring & Drift Detection
+  └── LLM Engineering: RAG, Fine-tuning, Prompt Engineering
+  └── 🏗️ Project 5: End-to-End ML System (FLAGSHIP)
+  └── 🎯 Interview: ML System Design Case Studies
+  
+FASE 8: Career Preparation (NEW)            [Hari 76-85]
+  └── ML Coding Interview (LeetCode for ML)
+  └── ML System Design Interview (6 case studies)
+  └── Resume, LinkedIn, Portfolio Optimization
+  └── Behavioral Interview (STAR method for layoff story)
+  └── Mock Interview Schedule
+  
+FASE 9: Apply & Iterate (NEW)               [Hari 86-90]
+  └── Target: 10 applications/week
+  └── Network: LinkedIn, ML communities, ex-colleagues
+  └── Technical assessment practice
+  └── Iterate portfolio berdasarkan feedback
 ```
 
 ---
 
-## Aturan Main
+## 📋 Aturan Main
 
 ### ❌ Yang TIDAK boleh dilakukan:
 - Copy-paste kode tanpa modifikasi
 - Skip exercise/tantangan karena "sudah paham teorinya"
 - Langsung pakai library sebelum membangun versi scratch-nya
 - Menghabiskan lebih dari 3 hari di satu modul tanpa maju
+- **Bikin tutorial — fokus BUILD, bukan nonton**
 
 ### ✅ Yang HARUS dilakukan:
 - Tulis kode sendiri, bahkan kalau mirip contoh
 - Eksperimen: ubah hyperparameter, ubah data, lihat apa yang terjadi
 - Dokumentasikan insight di setiap notebook (bukan cuma kode, tapi PEMAHAMAN)
-- Setiap project HARUS punya README yang menjelaskan approach & hasil
+- **Setiap project HARUS punya README yang menjelaskan approach & hasil**
+- **Setiap project HARUS bisa di-demo (Streamlit / API / Notebook runnable)**
 - Commit ke git setiap selesai satu modul
+- **Bangun portfolio website/GitHub yang rapi (ini CV-mu!)**
 
 ### 🎯 Graduation Criteria per Fase:
 Kamu boleh lanjut ke fase berikutnya HANYA jika:
 1. Semua exercise selesai
 2. Project fase tersebut sudah complete dengan README
 3. Bisa menjelaskan konsep ke orang lain TANPA melihat kode
+4. **Bisa jawab 3 pertanyaan interview tentang topik tersebut**
 
 ---
 
-## Cara Menggunakan
+## 💼 Career Track: ML Engineer vs AI Engineer vs Data Scientist
+
+Berdasarkan background kamu (backend + S2 EE), fokus ke **ML Engineer** atau **AI Engineer**:
+
+| Role | Fokus | Kamu Cocok Jika... |
+|------|-------|-------------------|
+| **ML Engineer** | Build & deploy ML systems, MLOps, scalability | ✅ Suka infrastructure, backend, system design |
+| **AI Engineer** | Build AI apps (LLM, RAG, agents), integration | ✅ Suka product, fast iteration, API integration |
+| **Data Scientist** | Analysis, experimentation, insights | ⚠️ Lebih ke riset & bisnis, less engineering |
+
+**Rekomendasi:** Target **ML Engineer** dulu (leverage backend exp), lalu bisa pivot ke **AI Engineer** setelah kuat di MLOps.
+
+---
+
+## 🛠️ Technology Stack (Updated)
+
+| Kategori | Library / Tool |
+|----------|----------------|
+| Bahasa | Python 3.10+ |
+| Data & Array | NumPy, Pandas |
+| Visualisasi | Matplotlib, Seaborn, Plotly |
+| Classical ML | scikit-learn, XGBoost, LightGBM |
+| Deep Learning | PyTorch, torchvision, torchaudio |
+| NLP / LLM | Hugging Face `transformers`, `datasets`, LangChain, OpenAI API |
+| MLOps | MLflow, Weights & Biases, DVC, Hydra |
+| Deployment | FastAPI, Docker, GitHub Actions |
+| Monitoring | Evidently AI, Prometheus (basic) |
+| Cloud (opsional) | AWS SageMaker / GCP Vertex AI |
+| Environment | VS Code + Jupyter Interactive |
+
+---
+
+## 🎓 Output yang Diharapkan Setelah 90 Hari
+
+### Portfolio Pieces (Wajib Ada di GitHub):
+1. **Project 1: EDA + Prediction** → Data storytelling + baseline model
+2. **Project 2: Signal Classification** → EE domain expertise + sklearn
+3. **Project 3: Computer Vision** → PyTorch + deployment
+4. **Project 4: NLP Pipeline** → Transformer + real application
+5. **Project 5: End-to-End ML System** → **FLAGSHIP** (MLOps + API + Docker + Monitoring)
+6. **Project 6 (Opsional): LLM App** → RAG / Agent (tren 2025-2026)
+
+### Skills Checklist untuk Apply:
+- [ ] Bisa implementasi Linear/Logistic Regression dari nol (NumPy)
+- [ ] Bisa training CNN/RNN/Transformer dengan PyTorch
+- [ ] Bisa deploy model dengan FastAPI + Docker
+- [ ] Bisa setup MLflow/W&B experiment tracking
+- [ ] Bisa jawab ML System Design case (design recommendation system, fraud detection, etc.)
+- [ ] Bisa coding interview (SQL, Pandas, Python algorithms)
+- [ ] Punya portfolio GitHub dengan README lengkap per project
+- [ ] Resume yang highlight "Backend → ML" transition story
+
+---
+
+## 📅 90-Day Daily Action Plan
+
+**Lihat file:** [`90-day-action-plan.md`](./90-day-action-plan.md)
+
+File ini berisi:
+- Daily schedule (pagi: teori, sore: praktek, malam: review)
+- Weekly milestones & deliverables
+- Weekend tasks (portfolio building, networking, mock interview)
+- Recovery plan kalau ketinggalan 2-3 hari
+
+---
+
+## 🧠 Cara Menggunakan Kurikulum Ini
 
 ```bash
 # Setup environment
@@ -108,16 +223,27 @@ Setiap file Python berisi:
 - 💻 **Kode contoh** — implementasi yang bisa dirun
 - 🏋️ **Exercise** — latihan dengan petunjuk, TANPA jawaban
 - 🔥 **Challenge** — soal open-ended untuk eksplorasi mandiri
+- 🎯 **Interview Prep** — pertanyaan yang sering muncul di interview
 
 ---
 
-## Estimasi Total: ~3-4 bulan (part-time, 1-2 jam/hari)
+## 💪 Motivasi untuk yang Baru Di-Layoff
 
-Dengan background S2 Teknik Elektro, beberapa bagian bisa lebih cepat:
-- Fase 1 bisa selesai lebih cepat (math foundation sudah ada)
-- Fase 2 gradient descent / optimization → sudah familiar
-- Fase 4 CNN convolution → direct mapping dari signal processing
+> **"Layoff bukan akhir — itu reset button untuk karir yang lebih baik."**
 
-**Kunci sukses: KONSISTENSI > INTENSITAS**
+Kelebihan kamu:
+- 🧠 Math foundation (S2 EE) → ML theory jauh lebih mudah
+- 💻 Backend experience → MLOps & deployment = natural
+- 📊 Signal processing knowledge → Feature engineering & time series = kuat
+- ⏰ Waktu fokus (tidak ada kerjaan lain) → bisa sprint 90 hari
 
-Lebih baik 1 jam setiap hari daripada 8 jam sekali seminggu.
+**Ini bukan downgrade dari backend — ini UPGRADE.**
+ML Engineer dengan backend experience = rare combination yang banyak dicari.
+
+---
+
+*Kunci sukses: KONSISTENSI > INTENSITAS*
+
+Lebih baik 2 jam setiap hari daripada 10 jam sekali seminggu.
+
+**Ready? Mulai dari [`00-setup/setup_environment.py`](./00-setup/setup_environment.py)** 🚀

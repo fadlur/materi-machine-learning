@@ -1,6 +1,6 @@
 """
 =============================================================
-FASE 6 — EXPERT LEVEL
+FASE 6 — EXPERT LEVEL + LLM ENGINEERING
 =============================================================
 Di fase ini, kamu bukan lagi belajar tools — kamu belajar
 MINDSET dan WORKFLOW seorang ML engineer profesional.
@@ -9,8 +9,9 @@ Tiga pilar:
 1. Paper Implementation — bisa membaca dan implementasi paper riset
 2. MLOps — experiment tracking, reproducibility, CI/CD
 3. Production — serving, monitoring, scaling
+4. LLM Engineering — RAG, fine-tuning, agents (NEW — tren 2025-2026)
 
-Durasi target: 4+ minggu (ongoing practice)
+Durasi target: 3-4 minggu
 =============================================================
 """
 
@@ -48,7 +49,11 @@ print("""
 ║     → Vision Transformer (ViT)                           ║
 ║     → Implementasi patch embedding + transformer         ║
 ║                                                          ║
-║  ⑤ Paper dari domain EE:                                ║
+║  ⑤ "LoRA: Low-Rank Adaptation" (Hu et al., 2021)       ║
+║     → Efficient fine-tuning untuk LLM                    ║
+║     → Hanya train 0.1% parameters!                       ║
+║                                                          ║
+║  ⑥ Paper dari domain EE:                                ║
 ║     → "Deep Learning for Fault Diagnosis" (review)       ║
 ║     → "Temporal Fusion Transformers" (time series)       ║
 ║     → Pilih 1 paper terbaru dari domain risetmu          ║
@@ -148,6 +153,48 @@ print("""
 ║  - Buat Streamlit demo untuk model                       ║
 ║  - Implementasi simple monitoring (log predictions)      ║
 ║                                                          ║
+╠══════════════════════════════════════════════════════════╣
+║                                                          ║
+║  MODUL 4: LLM ENGINEERING (NEW — Wajib 2025-2026)       ║
+║  ─────────────────────────────────                     ║
+║                                                          ║
+║  LLM (Large Language Models) adalah skill #1 yang        ║
+║  dicari di AI Engineer roles. Background backend kamu    ║
+║  sangat cocok untuk LLM deployment & infrastructure.     ║
+║                                                          ║
+║  1. Prompt Engineering:                                  ║
+║     - Zero-shot, few-shot, chain-of-thought              ║
+║     - Prompt templates & versioning                      ║
+║     - Structured output (JSON mode, function calling)    ║
+║                                                          ║
+║  2. RAG (Retrieval-Augmented Generation):                ║
+║     - Document ingestion & chunking                      ║
+║     - Vector database (ChromaDB, Pinecone, Weaviate)     ║
+║     - Embedding models (OpenAI, Sentence-Transformers)   ║
+║     - Retrieval strategies & reranking                   ║
+║                                                          ║
+║  3. Fine-tuning LLM:                                     ║
+║     - LoRA / QLoRA (efficient fine-tuning)               ║
+║     - Dataset preparation untuk instruction tuning       ║
+║     - Evaluation metrics untuk LLM                       ║
+║                                                          ║
+║  4. LLM Agents:                                          ║
+║     - ReAct pattern (Reasoning + Acting)                 ║
+║     - Tool use / Function calling                        ║
+║     - Multi-agent systems                                ║
+║                                                          ║
+║  5. LLM Deployment:                                      ║
+║     - vLLM / TGI untuk high-throughput serving           ║
+║     - Streaming responses                                ║
+║     - Cost optimization (caching, batching)              ║
+║                                                          ║
+║  Exercise:                                               ║
+║  - Buat RAG system untuk dokumen domain EE (misal:      ║
+║    paper, datasheet, manual)                             ║
+║  - Deploy sebagai FastAPI dengan streaming               ║
+║  - Bandingkan: vanilla LLM vs RAG                        ║
+║  - (Opsional) Fine-tune model kecil dengan LoRA         ║
+║                                                          ║
 ╚══════════════════════════════════════════════════════════╝
 """)
 
@@ -183,7 +230,15 @@ print("""
 ║  - Web dashboard dengan real-time visualization          ║
 ║  - Alert system                                          ║
 ║                                                          ║
-║  OPSI C: Custom Project dari Riset S2                    ║
+║  OPSI C: LLM-Powered Engineering Assistant               ║
+║  ─────────────────────────────────────                   ║
+║  - RAG atas manual, datasheet, paper EE                  ║
+║  - Conversational interface (chat)                       ║
+║  - Source citation untuk setiap jawaban                  ║
+║  - FastAPI backend + Streamlit frontend                  ║
+║  - Document upload & management                          ║
+║                                                          ║
+║  OPSI D: Custom Project dari Riset S2                    ║
 ║  ─────────────────────────────────────                   ║
 ║  - Ambil topik dari riset/thesis S2 kamu                 ║
 ║  - Apply ML untuk solve problem di domain tsb            ║
@@ -199,6 +254,7 @@ print("""
 ║  ✓ Docker deployment                                     ║
 ║  ✓ README with full documentation                        ║
 ║  ✓ Git version controlled                                ║
+║  ✓ (Untuk LLM) RAG atau Fine-tuning evidence             ║
 ║                                                          ║
 ║  Ini akan menjadi PORTFOLIO PIECE terbaikmu.             ║
 ║                                                          ║
@@ -216,7 +272,8 @@ Skill yang sudah kamu miliki:
 ✅ Fundamental ML (dari nol sampai sklearn)
 ✅ Deep Learning (CNN, RNN, Transformer)
 ✅ Advanced topics (transfer learning, generative models)
-✅ MLOps (experiment tracking, testing)
+✅ LLM Engineering (RAG, fine-tuning, agents) ← HOT SKILL!
+✅ MLOps (experiment tracking, testing, CI/CD)
 ✅ Production (API, Docker, monitoring)
 
 Apa selanjutnya?
@@ -228,6 +285,7 @@ Apa selanjutnya?
    - Power Systems + ML
    - IoT + Edge ML
    - Robotics + Reinforcement Learning
+5. Build LLM-powered products — tren terbesar 2025-2026!
 
 Remember: The best ML engineer is one who NEVER STOPS LEARNING.
 """)
