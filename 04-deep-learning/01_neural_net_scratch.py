@@ -33,13 +33,53 @@ np.random.seed(42)
 # output = activation(w·x + b)
 
 class Neuron:
-    """Single neuron — building block dari neural network"""
+    """
+    Single neuron — building block dari neural network.
+    
+    Model: z = w·x + b, output = activation(z)
+    
+    Parameters:
+    -----------
+    n_inputs : int
+        Jumlah input features.
+    activation : str, default 'sigmoid'
+        Fungsi aktivasi: 'sigmoid', 'relu', 'tanh'.
+        
+    Attributes:
+    -----------
+    w : np.ndarray
+        Weights.
+    b : float
+        Bias.
+        
+    Notes:
+    ------
+    - Single neuron = logistic regression (sigmoid) atau
+      linear regression (no activation)
+    - Weights diinisialisasi kecil (×0.1) untuk stabilitas
+    - Koneksi Teknik Elektro: mirip dengan op-amp dengan
+      feedback dan saturating nonlinearity
+    """
+    
     def __init__(self, n_inputs, activation='sigmoid'):
         self.w = np.random.randn(n_inputs) * 0.1
         self.b = 0.0
         self.activation = activation
-
+    
     def forward(self, x):
+        """
+        Forward pass.
+        
+        Parameters:
+        -----------
+        x : np.ndarray, shape (n_samples, n_inputs)
+            Input data.
+            
+        Returns:
+        --------
+        np.ndarray
+            Output setelah aktivasi.
+        """
         z = x @ self.w + self.b
         if self.activation == 'sigmoid':
             return 1 / (1 + np.exp(-np.clip(z, -500, 500)))
@@ -48,6 +88,7 @@ class Neuron:
         elif self.activation == 'tanh':
             return np.tanh(z)
         return z
+
 
 # Visualisasi activation functions
 z = np.linspace(-5, 5, 200)
@@ -79,28 +120,58 @@ print("📊 Saved: 01_activations.png")
 class NeuralNetwork:
     """
     Multi-layer neural network from scratch.
-
+    
     Architecture: Input → Hidden₁ → Hidden₂ → ... → Output
-    Activation: ReLU untuk hidden layers, Sigmoid/Softmax untuk output
-    Loss: Binary Cross-Entropy (binary) atau Cross-Entropy (multi-class)
+    Activation: ReLU untuk hidden layers, Sigmoid untuk output
+    Loss: Binary Cross-Entropy
     Optimizer: SGD with momentum
+    
+    Parameters:
+    -----------
+    layer_sizes : list
+        List jumlah neurons per layer.
+        Contoh [2, 16, 8, 1] = input(2), hidden(16,8), output(1).
+    learning_rate : float, default 0.01
+    momentum : float, default 0.9
+    
+    Attributes:
+    -----------
+    weights : list of np.ndarray
+        Weight matrices per layer.
+    biases : list of np.ndarray
+        Bias vectors per layer.
+    velocity_w : list of np.ndarray
+        Velocity untuk momentum (weights).
+    velocity_b : list of np.ndarray
+        Velocity untuk momentum (biases).
+    loss_history : list
+        Riwayat loss.
+        
+    Notes:
+    ------
+    - Forward: simpan activations dan z_values untuk backprop
+    - Backprop: chain rule dari output ke input
+    - Momentum: velocity = β*velocity - lr*gradient
+    - He initialization: good untuk ReLU
+    
+    Koneksi Teknik Elektro:
+    - Forward pass = signal propagation melalui cascaded systems
+    - Backprop = sensitivity analysis (adjoint method)
+    - Chain rule = transfer function cascading
     """
-
+    
     def __init__(self, layer_sizes, learning_rate=0.01, momentum=0.9):
-        """
-        layer_sizes: list, contoh [2, 16, 8, 1] = input(2), hidden(16,8), output(1)
-        """
         self.layers = layer_sizes
         self.lr = learning_rate
         self.momentum = momentum
         self.loss_history = []
-
+        
         # Initialize weights (Xavier/He initialization)
         self.weights = []
         self.biases = []
         self.velocity_w = []
         self.velocity_b = []
-
+        
         for i in range(len(layer_sizes) - 1):
             # He initialization: good for ReLU
             w = np.random.randn(layer_sizes[i], layer_sizes[i+1]) * np.sqrt(2.0 / layer_sizes[i])
@@ -109,56 +180,79 @@ class NeuralNetwork:
             self.biases.append(b)
             self.velocity_w.append(np.zeros_like(w))
             self.velocity_b.append(np.zeros_like(b))
-
+    
     def relu(self, z):
         return np.maximum(0, z)
-
+    
     def relu_derivative(self, z):
         return (z > 0).astype(float)
-
+    
     def sigmoid(self, z):
         return 1 / (1 + np.exp(-np.clip(z, -500, 500)))
-
+    
     def forward(self, X):
-        """Forward pass — simpan semua intermediate values untuk backprop"""
+        """
+        Forward pass — simpan semua intermediate values untuk backprop.
+        
+        Parameters:
+        -----------
+        X : np.ndarray, shape (n_samples, n_features)
+            Input data.
+            
+        Returns:
+        --------
+        np.ndarray
+            Output predictions.
+        """
         self.activations = [X]  # a[0] = input
         self.z_values = []       # pre-activation values
-
+        
         current = X
         for i in range(len(self.weights) - 1):
             z = current @ self.weights[i] + self.biases[i]
             self.z_values.append(z)
             current = self.relu(z)  # Hidden layers: ReLU
             self.activations.append(current)
-
-        # Output layer: Sigmoid (binary) atau linear
+        
+        # Output layer: Sigmoid (binary)
         z = current @ self.weights[-1] + self.biases[-1]
         self.z_values.append(z)
         output = self.sigmoid(z)
         self.activations.append(output)
-
+        
         return output
-
+    
     def backward(self, y):
         """
         Backpropagation — the CORE of neural network training.
-
+        
+        Parameters:
+        -----------
+        y : np.ndarray
+            True labels.
+            
+        Notes:
+        ------
         Chain rule: ∂L/∂w = ∂L/∂a · ∂a/∂z · ∂z/∂w
-
+        
         Ini mirip dengan analisis cascaded systems di Teknik Elektro:
         transfer function total = product of individual transfer functions.
         Backprop = menghitung "gain" di setiap stage secara backward.
+        
+        Algoritma:
+        1. Output layer: delta = a - y (untuk sigmoid + BCE)
+        2. Hidden layer: delta = (delta_next @ W.T) * activation'(z)
+        3. Gradients: dW = a_prev.T @ delta, db = sum(delta)
         """
         n = len(y)
         y = y.reshape(-1, 1) if y.ndim == 1 else y
-
+        
         # Output layer gradient
-        # ∂L/∂z_output = (a_output - y) untuk sigmoid + BCE
         delta = self.activations[-1] - y
-
+        
         gradients_w = []
         gradients_b = []
-
+        
         # Backpropagate through layers (dari output ke input)
         for i in range(len(self.weights) - 1, -1, -1):
             # Gradient untuk weights dan biases di layer i
@@ -166,52 +260,64 @@ class NeuralNetwork:
             db = (1/n) * np.sum(delta, axis=0)
             gradients_w.insert(0, dw)
             gradients_b.insert(0, db)
-
+            
             if i > 0:
                 # Propagate delta ke layer sebelumnya
                 delta = (delta @ self.weights[i].T) * self.relu_derivative(self.z_values[i-1])
-
+        
         # Update weights dengan momentum
         for i in range(len(self.weights)):
             self.velocity_w[i] = self.momentum * self.velocity_w[i] - self.lr * gradients_w[i]
             self.velocity_b[i] = self.momentum * self.velocity_b[i] - self.lr * gradients_b[i]
             self.weights[i] += self.velocity_w[i]
             self.biases[i] += self.velocity_b[i]
-
+    
     def train(self, X, y, epochs=100, batch_size=32, verbose=True):
-        """Training loop dengan mini-batch"""
+        """
+        Training loop dengan mini-batch.
+        
+        Parameters:
+        -----------
+        X : np.ndarray
+            Training features.
+        y : np.ndarray
+            Training labels.
+        epochs : int, default 100
+        batch_size : int, default 32
+        verbose : bool, default True
+        """
         n = len(X)
-
+        
         for epoch in range(epochs):
             # Shuffle
             indices = np.random.permutation(n)
             X_shuffled = X[indices]
             y_shuffled = y[indices]
-
+            
             # Mini-batch training
             for start in range(0, n, batch_size):
                 end = min(start + batch_size, n)
                 X_batch = X_shuffled[start:end]
                 y_batch = y_shuffled[start:end]
-
+                
                 self.forward(X_batch)
                 self.backward(y_batch)
-
+            
             # Compute epoch loss
             output = self.forward(X)
             y_col = y.reshape(-1, 1) if y.ndim == 1 else y
             loss = -np.mean(y_col * np.log(output + 1e-15) +
                            (1 - y_col) * np.log(1 - output + 1e-15))
             self.loss_history.append(loss)
-
+            
             if verbose and (epoch + 1) % 20 == 0:
                 acc = self.accuracy(X, y)
                 print(f"  Epoch {epoch+1}: loss={loss:.4f}, accuracy={acc:.4f}")
-
+    
     def predict(self, X):
         proba = self.forward(X)
         return (proba >= 0.5).astype(int).ravel()
-
+    
     def accuracy(self, X, y):
         return np.mean(self.predict(X) == y)
 
@@ -299,27 +405,127 @@ Dengan background Teknik Elektro, pikirkan ini sebagai:
 # 🏋️ EXERCISE 11: Extend the Neural Network
 # ===========================================================
 """
-1. Tambahkan support untuk:
-   - Leaky ReLU, ELU, GELU activation
-   - Dropout regularization
-   - Batch Normalization
-   - Multi-class output (softmax + cross-entropy)
+🎯 Learning Objectives:
+   - Memperluas neural network dengan fitur modern
+   - Memverifikasi backpropagation dengan gradient checking
+   - Memahami efek berbagai weight initialization
 
-2. Implementasi gradient checking:
-   - Hitung numerical gradient: ∂L/∂w ≈ (L(w+ε) - L(w-ε)) / (2ε)
-   - Bandingkan dengan analytical gradient dari backprop
-   - Relative error harus < 1e-5
+📋 LANGKAH-LANGKAH:
 
-3. Eksperimen weight initialization:
-   - Zero initialization (apa yang terjadi?)
-   - Random normal (0.01)
-   - Xavier initialization
-   - He initialization
-   - Bandingkan training speed dan final performance
+STEP 1: Tambahkan Support untuk Fitur Modern
+─────────────────────────────────────────────
+Modifikasi class NeuralNetwork untuk support:
 
-4. Visualisasi gradient flow:
-   - Plot magnitude gradient di setiap layer selama training
-   - Identifikasi vanishing/exploding gradients
+   a) Leaky ReLU, ELU, GELU activation:
+      - Leaky ReLU: max(αx, x) dengan α=0.01
+      - ELU: x jika x>0, α(exp(x)-1) jika x≤0
+      - GELU: x * Φ(x) (Gaussian CDF)
+      
+   b) Dropout regularization:
+      - During training: randomly set p% neurons to 0
+      - During inference: scale outputs by (1-p)
+      - Implementation: mask = (np.random.rand(shape) > p) / (1-p)
+      
+   c) Batch Normalization:
+      - Normalize per batch: (x - batch_mean) / sqrt(batch_var + eps)
+      - Learnable parameters: gamma (scale), beta (shift)
+      - Running statistics untuk inference
+      
+   d) Multi-class output (softmax + cross-entropy):
+      - Output layer: softmax instead of sigmoid
+      - Loss: categorical cross-entropy
+      - Gradient: probs - y_one_hot
+
+   💡 KENAPA fitur ini penting?
+     - Leaky ReLU/ELU/GELU: menghindari dead neurons
+     - Dropout: mencegah overfitting
+     - BatchNorm: mempercepat training, memungkinkan higher lr
+     - Softmax: generalisasi ke multi-class
+
+
+STEP 2: Implementasi Gradient Checking
+───────────────────────────────────────
+Verifikasi backpropagation dengan numerical gradient:
+
+   a) Untuk setiap weight w:
+      - Compute loss(w + ε)
+      - Compute loss(w - ε)
+      - Numerical gradient = (loss(w+ε) - loss(w-ε)) / (2ε)
+      
+   b) Bandingkan dengan analytical gradient dari backprop
+   c) Relative error harus < 1e-5
+   
+   Formula relative error:
+   |num_grad - ana_grad| / (|num_grad| + |ana_grad| + eps)
+   
+   💡 KENAPA gradient checking?
+     - Backpropagation mudah salah implementasi
+     - Gradient checking adalah unit test untuk backprop
+     - Wajib dilakukan saat mengembangkan architecture baru
+
+
+STEP 3: Eksperimen Weight Initialization
+─────────────────────────────────────────
+   Bandingkan 5 strategi inisialisasi:
+   
+   a) Zero initialization:
+      - weights = 0
+      - Ekspektasi: semua neuron identical → tidak belajar
+      
+   b) Random normal (0.01):
+      - weights = np.random.randn() * 0.01
+      - Ekspektasi: vanishing gradients di deep network
+      
+   c) Xavier initialization:
+      - weights = np.random.randn() * sqrt(1/n_in)
+      - Good untuk sigmoid/tanh
+      
+   d) He initialization:
+      - weights = np.random.randn() * sqrt(2/n_in)
+      - Good untuk ReLU (default di atas)
+      
+   e) Orthogonal initialization:
+      - weights = orthogonal matrix * scale
+      - Preserves norm through layers
+      
+   🧪 Test:
+   - Train network dengan masing-masing initialization
+   - Plot: gradient magnitude per layer
+   - Plot: training loss curve
+   - Analisis: mana yang paling stabil?
+
+
+STEP 4: Visualisasi Gradient Flow
+─────────────────────────────────
+   Plot magnitude gradient di setiap layer selama training:
+   
+   a) Untuk setiap epoch, hitung mean absolute gradient per layer
+   b) Plot: layer vs gradient magnitude (heatmap atau line plot)
+   c) Identifikasi: ada layer dengan vanishing/exploding gradients?
+   
+   💡 KENAPA visualisasi?
+     - Membantu diagnose training issues
+     - Layer dengan gradient ~0 = tidak belajar
+     - Layer dengan gradient huge = unstable
+
+
+💡 HINTS:
+   - Untuk GELU, gunakan approx: 0.5*x*(1+tanh(sqrt(2/π)*(x+0.044715*x^3)))
+   - Untuk gradient checking, ε = 1e-5
+   - Untuk BatchNorm, simpan running_mean dan running_var
+   - Orthogonal init: np.linalg.qr(np.random.randn(n, n))[0]
+
+⚠️ COMMON MISTAKES:
+   - Dropout diterapkan saat inference
+   - BatchNorm menggunakan batch stats saat inference
+   - Gradient checking dengan ε terlalu kecil → numerical issues
+   - Lupa scale dropout output saat inference
+
+🎯 EXPECTED OUTPUT:
+   - NeuralNetwork yang support modern features
+   - Gradient checking passing (relative error < 1e-5)
+   - He initialization paling stabil untuk ReLU
+   - Visualisasi gradient flow yang informatif
 """
 
 
@@ -327,23 +533,114 @@ Dengan background Teknik Elektro, pikirkan ini sebagai:
 # 🔥 CHALLENGE: Universal Function Approximator
 # ===========================================================
 """
-Buktikan bahwa neural network adalah Universal Function Approximator:
+🎯 Learning Objectives:
+   - Membuktikan teorema Universal Approximation
+   - Memahami tradeoff depth vs width
+   - Menganalisis representasi internal neural network
 
-1. Buat target function yang kompleks:
+📋 LANGKAH-LANGKAH:
+
+STEP 1: Define Target Function
+──────────────────────────────
+Buat fungsi target yang kompleks:
    f(x) = sin(x) * cos(2x) + 0.5 * sin(5x)
+   
+Generate data:
+   x = np.linspace(-2π, 2π, 1000)
+   y = f(x) + noise
+   
+💡 KENAPA fungsi ini?
+  - Non-linear (tidak bisa di-approximate dengan linear model)
+  - Multiple frequency components
+  - Memerlukan representasi hierarchical
 
-2. Train neural network untuk approximate function ini:
-   - Coba berbagai depth: 1, 2, 3, 5, 10 hidden layers
-   - Coba berbagai width: 4, 8, 16, 32, 64 neurons per layer
-   - Mana yang lebih penting: depth atau width?
 
-3. Visualisasi:
-   - True function vs NN approximation di setiap konfigurasi
-   - Training loss curve per konfigurasi
-   - "Representation" di setiap hidden layer (apa yang di-learn?)
+STEP 2: Experiment with Architecture
+────────────────────────────────────
+Coba berbagai konfigurasi:
 
-4. Buat kesimpulan: minimum depth & width untuk approximate
-   function ini dengan error < 0.01
+   a) Depth experiment (width fixed = 32):
+      - 1 hidden layer
+      - 2 hidden layers
+      - 3 hidden layers
+      - 5 hidden layers
+      - 10 hidden layers
+      
+   b) Width experiment (depth fixed = 2):
+      - 4 neurons per layer
+      - 8 neurons per layer
+      - 16 neurons per layer
+      - 32 neurons per layer
+      - 64 neurons per layer
+      
+   💡 KENAPA experiment ini?
+     - Teorema UAT: 1 hidden layer cukup untuk approximate
+       ANY continuous function (dengan width yang cukup)
+     - Tapi dalam praktik: deep networks lebih efisien
+     - Depth vs width tradeoff adalah active research area
+
+
+STEP 3: Train and Evaluate
+───────────────────────────
+   Untuk setiap konfigurasi:
+   a) Train sampai convergence
+   b) Evaluate: MSE pada test set
+   c) Plot: true function vs approximation
+   d) Count: total number of parameters
+   
+   💡 Analisis:
+     - Mana yang lebih penting: depth atau width?
+     - Berapa minimum parameters untuk error < 0.01?
+     - Apakah deeper always better?
+
+
+STEP 4: Analyze Internal Representations
+──────────────────────────────────────────
+   Untuk network terbaik, analisis hidden layers:
+   
+   a) Visualisasi activation patterns:
+      - Forward pass data melalui network
+      - Plot activation di setiap hidden layer
+      - Apakah ada "feature detectors" yang muncul?
+      
+   b) Weight visualization:
+      - Plot heatmap dari weight matrices
+      - Apakah ada structure yang terbentuk?
+      
+   c) Feature evolution:
+      - Input: simple sinusoid
+      - Layer 1: ???
+      - Layer 2: ???
+      - Output: approximation
+      - Apa yang di-learn di setiap layer?
+
+
+STEP 5: Conclusion
+──────────────────
+   Buat kesimpulan:
+   - Minimum depth & width untuk approximate fungsi ini dengan error < 0.01
+   - Insight tentang representasi hierarchical
+   - Recommendation untuk choosing architecture
+
+
+💡 HINTS:
+   - Gunakan MSE loss untuk regression
+   - Output layer: linear (tanpa activation)
+   - Learning rate: 0.01-0.1
+   - Early stopping jika loss stagnate
+   - Smoothing dengan moving average untuk visualisasi
+
+⚠️ COMMON MISTAKES:
+   - Terlalu few parameters → underfitting
+   - Terlalu many parameters → overfitting
+   - Learning rate terlalu besar → divergence
+   - Tidak normalize input → training instabil
+
+🎯 EXPECTED OUTPUT:
+   - Network dengan MSE < 0.01
+   - Analysis: depth vs width tradeoff
+   - Visualisasi internal representations
+   - Kesimpulan praktis untuk memilih architecture
 
 Ini fondasi untuk memahami kenapa deep learning bekerja!
 """

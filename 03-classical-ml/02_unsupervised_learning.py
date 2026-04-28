@@ -33,6 +33,14 @@ np.random.seed(42)
 # ===========================================================
 # 📖 BAGIAN 1: K-Means Clustering
 # ===========================================================
+# K-Means = algoritma clustering paling populer.
+# Goal: partisi data ke k clusters dengan within-cluster variance minimum.
+#
+# Algoritma (Lloyd's algorithm):
+# 1. Inisialisasi k centroid (random)
+# 2. Assign setiap point ke centroid terdekat (E-step)
+# 3. Update centroid = mean dari points di cluster (M-step)
+# 4. Ulangi sampai convergen
 
 X_blobs, y_true = make_blobs(n_samples=300, centers=4,
                               cluster_std=0.8, random_state=42)
@@ -43,10 +51,15 @@ labels = kmeans.fit_predict(X_blobs)
 
 print("=== K-Means Clustering ===")
 print(f"Inertia: {kmeans.inertia_:.2f}")
+# Inertia = within-cluster sum of squares (WCSS)
+# Semakin kecil → cluster semakin compact
 print(f"Silhouette Score: {silhouette_score(X_blobs, labels):.4f}")
+# Silhouette = (-1, 1). 1 = perfect clustering, 0 = overlapping, -1 = wrong
 print(f"Adjusted Rand Index: {adjusted_rand_score(y_true, labels):.4f}")
+# ARI = (-1, 1). 1 = perfect match dengan ground truth
 
 # Elbow Method — cara menentukan K optimal
+# Plot inertia vs K, cari "siku" (elbow)
 inertias = []
 sil_scores = []
 K_range = range(2, 10)
@@ -93,10 +106,13 @@ axes[0].scatter(X_moons[:, 0], X_moons[:, 1], c=km.fit_predict(X_moons),
 axes[0].set_title('K-Means (GAGAL pada non-convex)')
 
 # DBSCAN (BERHASIL!)
+# eps = maximum distance antar 2 samples untuk dianggap neighbors
+# min_samples = minimum points untuk membentuk core point
 db = DBSCAN(eps=0.2, min_samples=5)
 labels_db = db.fit_predict(X_moons)
 axes[1].scatter(X_moons[:, 0], X_moons[:, 1], c=labels_db, cmap='Set1', s=20)
 axes[1].set_title(f'DBSCAN (clusters: {len(set(labels_db)) - (1 if -1 in labels_db else 0)})')
+# -1 = noise points (outliers)
 
 # Hierarchical
 hc = AgglomerativeClustering(n_clusters=2, linkage='single')
@@ -129,6 +145,7 @@ print(f"\n=== PCA pada Digits Dataset ===")
 print(f"Original shape: {X_digits.shape}")
 
 # Standardize
+# PCA sensitive ke scale → harus standardize terlebih dahulu
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X_digits)
 
@@ -137,11 +154,12 @@ pca = PCA()
 X_pca = pca.fit_transform(X_scaled)
 
 # Variance explained
+# Setiap PC menjelaskan sebagian variance dari data
 cumulative_var = np.cumsum(pca.explained_variance_ratio_)
 
 fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
-# Variance explained
+# Variance explained per PC
 axes[0].plot(pca.explained_variance_ratio_[:30], 'bo-', markersize=4)
 axes[0].set_xlabel('Principal Component')
 axes[0].set_ylabel('Variance Explained')
@@ -227,6 +245,8 @@ X_mixed = np.vstack([X_normal, X_anomaly])
 y_truth = np.array([1] * n_normal + [-1] * n_anomaly)
 
 # Isolation Forest
+# Prinsip: outliers lebih "isolated" dan lebih mudah dipisahkan
+# Mengisolasi outlier membutuhkan fewer splits dari normal points
 iso_forest = IsolationForest(contamination=0.1, random_state=42)
 y_pred_if = iso_forest.fit_predict(X_mixed)
 
@@ -249,21 +269,113 @@ print("\n📊 Saved: 06_anomaly_detection.png")
 # 🏋️ EXERCISE 9: Unsupervised Analysis
 # ===========================================================
 """
-1. Implementasi K-Means FROM SCRATCH (NumPy only):
-   - Random initialization
-   - E-step: assign each point to nearest centroid
-   - M-step: recompute centroids
-   - Implement K-means++ initialization (smarter seeding)
+🎯 Learning Objectives:
+   - Mengimplementasikan K-Means dari nol
+   - Mengimplementasikan PCA dari nol
+   - Mengaplikasikan unsupervised methods ke real dataset
 
-2. Implementasi PCA FROM SCRATCH:
-   - Compute covariance matrix
-   - Eigendecomposition
-   - Project data
+📋 LANGKAH-LANGKAH:
 
-3. Gunakan PCA + K-Means pada real dataset:
-   - Apply PCA untuk reduce dimensionality
-   - Tentukan K optimal (elbow + silhouette)
-   - Cluster dan analisis: apa yang dikelompokkan?
+STEP 1: Implementasi K-Means FROM SCRATCH (NumPy only)
+───────────────────────────────────────────────────────
+Buat class KMeansScratch dengan algoritma Lloyd:
+
+   a) __init__(self, k, max_iters=100, tol=1e-4)
+   b) fit(X):
+      - Random initialization centroid (pilih k random points dari X)
+      - For iter in range(max_iters):
+        * Assign: labels = argmin ||X - centroids||²
+        * Update: centroids = mean(X[labels==i]) untuk setiap i
+        * Check convergence: if change < tol, break
+        
+   c) predict(X): return argmin ||X - centroids||²
+   
+   💡 KENAPA from scratch?
+     - Memahami algoritma secara mendalam
+     - Memahami sensitivity ke inisialisasi
+     - Memahami convergence criteria
+
+   🧪 Verification:
+     - Compare dengan sklearn KMeans pada dataset yang sama
+     - Inertia harus mendekati
+     - Labels bisa berbeda (permutation) tapi clustering sama
+
+
+STEP 2: Implementasi K-Means++ Initialization
+─────────────────────────────────────────────
+K-Means++ = smart initialization untuk centroid.
+
+   Algoritma:
+   a) Pilih centroid pertama secara random
+   b) Untuk setiap point, hitung D(x)² = jarak ke centroid terdekat
+   c) Pilih centroid baru dengan probabilitas ∝ D(x)²
+   d) Ulangi sampai k centroid
+   
+   💡 KENAPA K-Means++?
+     - Menghindari poor initialization
+     - Convergence lebih cepat
+     - Hasil lebih konsisten
+     - Default di sklearn
+
+
+STEP 3: Implementasi PCA FROM SCRATCH
+──────────────────────────────────────
+Buat class PCAScratch:
+
+   a) fit(X):
+      - Center data: X_centered = X - mean
+      - Covariance matrix: C = X_centered.T @ X_centered / (n-1)
+      - Eigendecomposition: eigenvalues, eigenvectors = np.linalg.eigh(C)
+      - Sort by eigenvalues descending
+      
+   b) transform(X, n_components):
+      - Project X ke top-k eigenvectors
+      - return X @ eigenvectors[:, :k]
+      
+   💡 KENAPA from scratch?
+     - Memahami bahwa PCA = eigendecomposition of covariance
+     - Memahami bahwa PC = eigenvectors
+     - Memahami bahwa variance explained = eigenvalues
+
+   🧪 Verification:
+     - Compare dengan sklearn PCA
+     - Eigenvalues harus sama (ordering bisa berbeda untuk degenerate)
+     - Transformasi harus sama (sign bisa berbeda)
+
+
+STEP 4: Gunakan PCA + K-Means pada Real Dataset
+────────────────────────────────────────────────
+   Dataset: Digits (sudah di-load di atas)
+   
+   a) Apply PCA untuk reduce dimensionality ke 10, 20, 30
+   b) Untuk setiap jumlah PC:
+      - Tentukan K optimal (elbow + silhouette)
+      - Cluster dengan K-Means
+      - Compare clusters dengan true labels (ARI)
+      
+   c) Analisis:
+      - Berapa PC yang optimal untuk clustering?
+      - Apakah clustering menangkap digit classes?
+      - Mana digit yang paling sulit dipisahkan?
+
+
+💡 HINTS:
+   - np.linalg.eigh untuk symmetric matrix (covariance)
+   - np.argsort untuk sorting eigenvalues
+   - np.linalg.norm(X[:, None] - centroids, axis=2) untuk distance matrix
+   - np.argmin(distance_matrix, axis=1) untuk labels
+
+⚠️ COMMON MISTAKES:
+   - Tidak center data sebelum PCA
+   - Lupa sort eigenvalues descending
+   - K-Means tanpa multiple init → stuck di local minimum
+   - Menghitung covariance dengan n bukan n-1 (bias correction)
+
+🎯 EXPECTED OUTPUT:
+   - KMeansScratch yang matching dengan sklearn
+   - PCAScratch yang matching dengan sklearn
+   - Analysis: optimal PC untuk digit clustering
+   - Insight: digit mana yang sering "tercluster bersama"
 """
 
 
@@ -271,29 +383,115 @@ print("\n📊 Saved: 06_anomaly_detection.png")
 # 🔥 CHALLENGE: Anomaly Detection untuk Power Quality
 # ===========================================================
 """
+🎯 Learning Objectives:
+   - Membangun anomaly detection system untuk domain power systems
+   - Menggabungkan time domain dan frequency domain features
+   - Membandingkan multiple unsupervised methods
+
+📋 LANGKAH-LANGKAH:
+
+STEP 1: Generate Data Normal dan Anomali
+─────────────────────────────────────────
 Simulasi monitoring kualitas daya listrik:
 
-1. Generate data normal: sinyal 50Hz, THD < 5%, voltage ±5%
-2. Inject anomalies:
-   - Voltage sag (tegangan turun > 10%)
-   - Voltage swell (tegangan naik > 10%)
-   - Harmonic distortion (THD > 8%)
-   - Transient spikes
-   - Frequency deviation
+   a) Data normal (800 samples):
+      - Sinyal 50Hz sinusoidal, THD < 5%
+      - Voltage: 220V ± 5%
+      - Duration: 1 detik per sample
+      - Sampling rate: 1000 Hz
+      
+   b) Inject anomalies (200 samples):
+      - Voltage sag (tegangan turun > 10%)
+      - Voltage swell (tegangan naik > 10%)
+      - Harmonic distortion (THD > 8%)
+      - Transient spikes (impulse noise)
+      - Frequency deviation (49-51 Hz → 48 atau 52 Hz)
 
-3. Extract features dari setiap window (misal 1 detik):
+   💡 KENAPA anomalies ini?
+     - Realistic untuk power systems
+     - Setiap anomaly punya signature yang berbeda
+     - Penting untuk protective relaying
+
+
+STEP 2: Extract Features
+────────────────────────
+Dari setiap window (1 detik = 1000 samples):
+
+   Time domain:
    - RMS voltage
-   - THD
-   - Crest factor
-   - Frequency
-   - Spectral features
+   - Peak voltage
+   - Crest factor (peak/RMS)
+   - THD (Total Harmonic Distortion)
+   
+   Frequency domain:
+   - Dominant frequency
+   - Harmonic content (3rd, 5th, 7th)
+   - Spectral energy
+   
+   💡 KENAPA features ini?
+     - Voltage sag/swell terdeteksi di time domain
+     - Harmonic distortion terdeteksi di frequency domain
+     - Crest factor sensitif terhadap transients
 
-4. Gunakan unsupervised methods untuk:
-   a. Clustering: apakah anomali tercluster terpisah?
-   b. PCA: komponen mana yang membedakan normal vs anomali?
-   c. Isolation Forest: deteksi anomali tanpa label
 
-5. Bandingkan performance (pakai ground truth labels untuk evaluasi)
+STEP 3: Apply Unsupervised Methods
+───────────────────────────────────
+   a) Isolation Forest:
+      - contamination = estimated anomaly ratio (0.2)
+      - Evaluate: precision, recall, F1
+      
+   b) One-Class SVM:
+      - Train hanya pada data normal
+      - Test: apakah anomaly terdeteksi?
+      
+   c) Gaussian Mixture Model (GMM):
+      - Model data normal sebagai Gaussian
+      - Points dengan low likelihood = anomaly
+      
+   d) DBSCAN:
+      - Anomaly = noise points (-1)
+      - Tune eps dan min_samples
+
+
+STEP 4: Compare Performance
+───────────────────────────
+   Metrics:
+   - Precision: berapa detected anomaly yang benar?
+   - Recall: berapa anomaly yang tertangkap?
+   - F1-score
+   - False alarm rate
+   
+   Visualisasi:
+   - ROC curve (untuk methods yang output score)
+   - Confusion matrix per method
+   - Feature space dengan anomaly highlighted
+
+
+STEP 5: Analyze Results
+───────────────────────
+   a) Method mana yang terbaik untuk setiap jenis anomaly?
+   b) Fitur mana yang paling diskriminatif?
+   c) Apakah ada anomaly yang tidak tertangkap? Kenapa?
+   d) Bagaimana handle false alarms di production?
+
+
+💡 HINTS:
+   - np.fft.rfft untuk frequency domain analysis
+   - THD = sqrt(sum(harmonics²)) / fundamental
+   - IsolationForest(contamination=0.2) untuk 20% anomaly
+   - One-Class SVM nu parameter ≈ expected anomaly ratio
+
+⚠️ COMMON MISTAKES:
+   - Training anomaly detector pada data dengan anomaly → overfit
+   - Tidak scale features → distance-based methods bias
+   - Mengabaikan temporal patterns → anomaly mungkin sequential
+   - Threshold terlalu strict → banyak false negatives
+
+🎯 EXPECTED OUTPUT:
+   - Anomaly detection system dengan F1 > 0.85
+   - Per-method comparison table
+   - Feature importance analysis
+   - Recommendation untuk deployment
 
 Ini SANGAT relevan untuk power systems engineer!
 """

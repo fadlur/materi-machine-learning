@@ -118,7 +118,7 @@ for ax, kernel in zip(axes, kernels):
     svm = SVC(kernel=kernel, random_state=42)
     svm.fit(X_moon_train, y_moon_train)
     test_acc = svm.score(X_moon_test, y_moon_test)
-
+    
     # Plot decision boundary
     h = 0.02
     x_min, x_max = X_moon[:, 0].min() - 0.5, X_moon[:, 0].max() + 0.5
@@ -126,7 +126,7 @@ for ax, kernel in zip(axes, kernels):
     xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
                           np.arange(y_min, y_max, h))
     Z = svm.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
-
+    
     ax.contourf(xx, yy, Z, alpha=0.3, cmap='RdYlBu')
     ax.scatter(X_moon_test[:, 0], X_moon_test[:, 1], c=y_moon_test,
                cmap='RdYlBu', edgecolors='black', s=30)
@@ -233,23 +233,93 @@ print(f"Test score: {grid_search.score(X_test, y_test):.4f}")
 # 🏋️ EXERCISE 8: Model Selection Pipeline
 # ===========================================================
 """
-Buat fungsi run_experiment(X, y, models_dict, cv=5) yang:
+🎯 Learning Objectives:
+   - Membangun reusable experiment runner
+   - Melakukan proper model comparison dengan statistical testing
+   - Mengimplementasikan Bayesian Optimization
 
+📋 LANGKAH-LANGKAH:
+
+STEP 1: Buat function run_experiment()
+───────────────────────────────────────
+Buat function yang menerima:
+- X, y (data)
+- models_dict: dictionary model names dan instances
+- cv: jumlah fold
+
+Yang dilakukan:
 1. Untuk setiap model:
    a. Jalankan cross-validation
    b. Hitung mean, std, min, max score
    c. Catat training time
-
+   
 2. Output:
-   a. Tabel ranking model
+   a. DataFrame ranking model
    b. Box plot perbandingan
    c. Best model + best hyperparameters (GridSearch)
 
-3. Bonus: implementasi Bayesian Optimization untuk
-   hyperparameter tuning (lebih efisien dari GridSearch)
-   Hint: gunakan Gaussian Process sebagai surrogate model
+💡 KENAPA reusable function?
+  - Tidak perlu copy-paste code untuk setiap experiment
+  - Konsistent methodology
+  - Mudah di-extend
 
-Gunakan fungsi ini untuk semua project selanjutnya!
+
+STEP 2: Statistical Comparison
+──────────────────────────────
+Setelah mendapatkan CV scores untuk semua model:
+
+1. Paired t-test antar setiap pasangan model
+2. Buat heatmap p-values
+3. Identifikasi: mana yang significantly better?
+
+💡 KENAPA statistical test?
+  - Mean score lebih tinggi belum tentu significantly better
+  - Perlu bukti statistik untuk claim "model A lebih baik"
+  - Mencegah over-interpretasi random fluctuations
+
+
+STEP 3: (Bonus) Bayesian Optimization
+─────────────────────────────────────
+GridSearch mencoba SEMUA kombinasi → inefficient!
+Bayesian Optimization lebih pintar:
+
+1. Mulai dengan random samples
+2. Build surrogate model (Gaussian Process)
+3. Pilih next point yang maximize "expected improvement"
+4. Repeat
+
+Library: scikit-optimize (skopt)
+```python
+from skopt import BayesSearchCV
+search = BayesSearchCV(model, param_space, n_iter=50, cv=5)
+```
+
+💡 KENAPA Bayesian Optimization?
+  - Lebih efisien dari GridSearch (less iterations)
+  - Meng-handle continuous parameters
+  - Better untuk expensive evaluations
+
+⚠️ Hati-hati:
+  - Bayesian Optimization juga bisa overfit ke validation set
+  - Nested CV masih diperlukan untuk unbiased estimate
+
+
+💡 HINTS:
+   - Gunakan time.time() untuk mencatat training time
+   - Gunakan pd.DataFrame untuk menyimpan results
+   - Simpan raw scores untuk post-hoc analysis
+   - Gunakan scipy.stats.ttest_rel untuk paired t-test
+
+⚠️ COMMON MISTAKES:
+   - Data leakage di preprocessing pipeline
+   - Membandingkan model dengan hyperparameters yang tidak fair
+   - Tidak menggunakan nested CV untuk final evaluation
+   - Mengabaikan training time (deployability!)
+
+🎯 EXPECTED OUTPUT:
+   - Reusable run_experiment function
+   - Statistical comparison report
+   - Clear recommendation: "Deploy model X"
 """
 
 
@@ -257,25 +327,123 @@ Gunakan fungsi ini untuk semua project selanjutnya!
 # 🔥 CHALLENGE: Multi-class Sensor Fault Classification
 # ===========================================================
 """
-Buat sistem klasifikasi fault motor listrik dengan 5 kelas:
+🎯 Learning Objectives:
+   - Mengaplikasikan supervised learning ke domain EE
+   - Menangani imbalanced classes di data sensor
+   - Melakukan feature importance analysis per kelas
+
+📋 LANGKAH-LANGKAH:
+
+STEP 1: Generate Synthetic Sensor Data
+───────────────────────────────────────
+Buat dataset klasifikasi fault motor listrik dengan 5 kelas:
 - Normal
 - Bearing fault
 - Stator fault
 - Rotor fault
 - External interference
 
-Generate synthetic data yang realistis:
-- 1000 samples, 20 features (sensor readings)
-- Imbalanced classes (normal: 60%, bearing: 15%, stator: 10%, rotor: 10%, external: 5%)
-- Beberapa fitur berkorelasi tinggi (realistis untuk sensor data)
+   Spesifikasi:
+   - 1000 samples, 20 features (sensor readings)
+   - Imbalanced classes: normal: 60%, bearing: 15%, stator: 10%, rotor: 10%, external: 5%
+   - Beberapa fitur berkorelasi tinggi (realistis untuk sensor data)
+   - Noise level: moderate
 
-Tasks:
-1. Full EDA
-2. Feature engineering (domain knowledge dari EE!)
-3. Bandingkan minimal 5 model
-4. Hyperparameter tuning untuk best model
-5. Analisis: feature mana yang paling penting per kelas fault?
-6. Buat classification report lengkap
+   💡 KENAPA imbalanced?
+     - Fault jarang terjadi di dunia nyata
+     - Model cenderung bias ke kelas majority
+     - Perlu strategi khusus untuk evaluation
+
+
+STEP 2: Full EDA
+────────────────
+   a) Distribusi kelas
+   b) Correlation matrix
+   c) Pair plot untuk fitur paling penting
+   d) Box plot per kelas untuk fitur kunci
+
+
+STEP 3: Feature Engineering (Domain Knowledge EE!)
+──────────────────────────────────────────────────
+   Gunakan domain knowledge untuk membuat fitur baru:
+   
+   a) Statistical features: mean, std, RMS per window
+   b) Frequency domain features: dominant frequency, THD
+   c) Cross-sensor features: correlation between sensors
+   d) Physical features: power = V*I, power factor, etc.
+   
+   💡 KENAPA domain features?
+     - Fitur berbasis fisika lebih interpretable
+     - Biasanya lebih diskriminatif dari raw features
+     - Menunjukkan expertise di domain
+
+
+STEP 4: Compare Minimal 5 Model
+────────────────────────────────
+   a) Logistic Regression (baseline)
+   b) Decision Tree (interpretable)
+   c) Random Forest (ensemble)
+   d) Gradient Boosting (best for tabular)
+   e) SVM dengan RBF kernel
+   
+   Evaluation metrics:
+   - Accuracy (tapi hati-hati dengan imbalanced!)
+   - Precision, Recall, F1 per kelas
+   - Macro-average F1 (tidak terpengaruh imbalance)
+   - Weighted-average F1
+
+
+STEP 5: Hyperparameter Tuning untuk Best Model
+───────────────────────────────────────────────
+   Gunakan GridSearchCV untuk model terbaik.
+   
+   ⚠️ Hati-hati:
+   - Gunakan stratified CV untuk imbalanced data
+   - Primary metric: macro F1 atau weighted F1
+   - Jangan optimize accuracy untuk imbalanced data!
+
+
+STEP 6: Analisis Feature Importance per Kelas
+─────────────────────────────────────────────
+   Untuk Random Forest atau Gradient Boosting:
+   
+   a) Global feature importance (default dari sklearn)
+   b) Per-class feature importance:
+      - Untuk setiap kelas, lihat samples yang benar diprediksi
+      - Hitung mean feature value untuk samples tersebut
+      - Bandingkan dengan kelas lain
+      
+   c) Visualisasi:
+      - Bar plot global importance
+      - Heatmap: feature × class (mean value)
+
+
+STEP 7: Classification Report Lengkap
+─────────────────────────────────────
+   Untuk test set:
+   - Confusion matrix
+   - Per-class precision, recall, F1
+   - Macro dan weighted averages
+   - Analisis: kelas mana yang paling sulit diprediksi? Kenapa?
+
+
+💡 HINTS:
+   - Gunakan class_weight='balanced' untuk handle imbalance
+   - Gunakan SMOTE untuk oversampling (opsional)
+   - StratifiedKFold untuk CV imbalanced data
+   - classification_report dengan output_dict=True untuk analisis
+
+⚠️ COMMON MISTAKES:
+   - Optimizing accuracy untuk imbalanced data
+   - Tidak stratified split → test set tanpa minority class
+   - Feature engineering sebelum split → data leakage
+   - Tidak analyze per-class performance
+
+🎯 EXPECTED OUTPUT:
+   - Model dengan macro F1 > 0.80
+   - Feature importance analysis dengan insight domain EE
+   - Clear understanding: fitur mana yang membedakan setiap fault?
+   - Recommendation untuk deployment
 
 Simpan hasilnya di projects/project_02_klasifikasi_sinyal/
 """
