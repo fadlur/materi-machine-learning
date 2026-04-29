@@ -1,6 +1,6 @@
 """
 =============================================================
-FASE 3 — MODUL 2: UNSUPERVISED LEARNING
+FASE 3 - MODUL 2: UNSUPERVISED LEARNING
 =============================================================
 Unsupervised = tidak ada label. Model mencari STRUKTUR dalam data.
 
@@ -10,7 +10,7 @@ Tiga kategori utama:
 3. Anomaly Detection (Isolation Forest, LOF)
 
 Koneksi Teknik Elektro:
-- PCA = Karhunen-Loève Transform (KLT) → optimal decorrelation
+- PCA = Karhunen-Loeve Transform (KLT) -> optimal decorrelation
 - Clustering = signal segmentation
 - Anomaly detection = fault detection tanpa labeled data!
 
@@ -31,16 +31,50 @@ np.random.seed(42)
 
 
 # ===========================================================
-# 📖 BAGIAN 1: K-Means Clustering
+# BAGIAN 1: K-Means Clustering
 # ===========================================================
 # K-Means = algoritma clustering paling populer.
 # Goal: partisi data ke k clusters dengan within-cluster variance minimum.
 #
+# Matematika K-Means:
+# Objective: minimize Sum_{i=1}^{k} Sum_{x in C_i} ||x - mu_i||**2
+#   dimana C_i = cluster i, mu_i = centroid cluster i.
+# Ini adalah NP-hard problem, tapi Lloyd's algorithm memberikan
+# local optimum yang biasanya cukup baik.
+#
 # Algoritma (Lloyd's algorithm):
 # 1. Inisialisasi k centroid (random)
-# 2. Assign setiap point ke centroid terdekat (E-step)
-# 3. Update centroid = mean dari points di cluster (M-step)
+# 2. Assign setiap point ke centroid terdekat (E-step / Expectation)
+# 3. Update centroid = mean dari points di cluster (M-step / Maximization)
 # 4. Ulangi sampai convergen
+#
+# Kenapa K-Means penting?
+# - Simplicity: algoritma paling sederhana dan cepat untuk clustering.
+# - Scalability: O(n * k * i * d) dimana n=samples, k=clusters,
+#   i=iterations, d=dimensions. Bisa handle dataset besar.
+# - Foundation: banyak algoritma clustering lebih canggih
+#   mengembangkan ide K-Means.
+#
+# Hyperparameter kunci:
+# - n_clusters (k): jumlah cluster. Biasanya tidak diketahui!
+#   Gunakan Elbow Method atau Silhouette Score untuk estimasi.
+# - init: metode inisialisasi. 'k-means++' (default) lebih baik
+#   dari random karena menghindari poor initialization.
+# - n_init: berapa kali K-Means dijalankan dengan init berbeda.
+#   Default di sklearn >= 1.4 adalah "auto" (= 10 untuk k-means++).
+#   Pilih best run berdasarkan inertia.
+#
+# Keterbatasan K-Means:
+# - Asumsikan cluster berbentuk convex (bulat).
+# - Tidak bisa handle non-convex shapes (contoh: moons).
+# - Sensitif terhadap skala fitur -> WAJIB standardize!
+# - Sensitif terhadap outliers (karena menggunakan mean).
+# - Random initialization bisa menyebabkan local minimum yang buruk.
+#
+# Koneksi Teknik Elektro:
+# - K-Means = vector quantization (VQ) - seperti di kompresi sinyal audio
+# - Centroid = codebook vectors
+# - Assignment = encoding ke nearest codeword
 
 X_blobs, y_true = make_blobs(n_samples=300, centers=4,
                               cluster_std=0.8, random_state=42)
@@ -52,14 +86,29 @@ labels = kmeans.fit_predict(X_blobs)
 print("=== K-Means Clustering ===")
 print(f"Inertia: {kmeans.inertia_:.2f}")
 # Inertia = within-cluster sum of squares (WCSS)
-# Semakin kecil → cluster semakin compact
+# Semakin kecil -> cluster semakin compact
+# TIPS: Inertia selalu turun seiring k meningkat, jadi tidak bisa
+#   digunakan untuk memilih k secara langsung (makanya Elbow Method).
+
 print(f"Silhouette Score: {silhouette_score(X_blobs, labels):.4f}")
 # Silhouette = (-1, 1). 1 = perfect clustering, 0 = overlapping, -1 = wrong
+# Formula: s(i) = (b(i) - a(i)) / max(a(i), b(i))
+#   a(i) = avg distance ke point di cluster yang sama
+#   b(i) = avg distance ke point di cluster terdekat
+# Silhouette mengukur seberapa "mirip" suatu point dengan clusternya
+# sendiri dibanding cluster terdekat.
+
 print(f"Adjusted Rand Index: {adjusted_rand_score(y_true, labels):.4f}")
 # ARI = (-1, 1). 1 = perfect match dengan ground truth
+# ARI mengukur similarity antara dua clustering, adjusted untuk chance.
+# ARI = 0 berarti clustering random (tidak lebih baik dari chance).
 
-# Elbow Method — cara menentukan K optimal
+# Elbow Method - cara menentukan K optimal
 # Plot inertia vs K, cari "siku" (elbow)
+# Teori: penurunan inertia yang signifikan menunjukkan struktur baru.
+# Setelah elbow, penambahan cluster hanya memecah cluster existing.
+# TIPS: Elbow tidak selalu jelas. Gunakan Silhouette Score sebagai validasi.
+
 inertias = []
 sil_scores = []
 K_range = range(2, 10)
@@ -84,16 +133,49 @@ axes[1].set_title('Silhouette Score (higher = better)')
 plt.tight_layout()
 plt.savefig('01_elbow_silhouette.png', dpi=100, bbox_inches='tight')
 plt.close()
-print("📊 Saved: 01_elbow_silhouette.png")
+print("OK Saved: 01_elbow_silhouette.png")
 
 
 # ===========================================================
-# 📖 BAGIAN 2: DBSCAN — Density-Based Clustering
+# BAGIAN 2: DBSCAN - Density-Based Clustering
 # ===========================================================
 # Keunggulan DBSCAN vs K-Means:
 # - Tidak perlu tentukan K
 # - Bisa mendeteksi cluster berbentuk aneh
 # - Bisa mengidentifikasi outliers (noise points)
+#
+# Matematika DBSCAN:
+# - Core point: point dengan minimal min_samples neighbors dalam radius eps.
+# - Border point: point dalam radius eps dari core point tapi bukan core.
+# - Noise point: point yang bukan core maupun border.
+# - Density-reachable: chain of core points dengan jarak <= eps.
+# - Cluster: semua points yang density-reachable dari core point yang sama.
+#
+# Hyperparameter kunci:
+# - eps (epsilon): radius neighborhood. Ini parameter PALING KRUSIAL.
+#   Terlalu kecil = semua point jadi noise. Terlalu besar = semua jadi 1 cluster.
+#   TIPS: Plot k-distance graph (jarak ke k-th nearest neighbor, biasanya k=4).
+#   Pilih eps di "elbow" dari k-distance plot.
+# - min_samples: minimum points untuk jadi core point.
+#   Default 5. Naikkan untuk data noisy. Turunkan untuk data sparse.
+#
+# Kenapa DBSCAN penting?
+# - Tidak membuat asumsi bentuk cluster.
+# - Robust terhadap outliers (noise di-label -1).
+# - Hanya memerlukan 2 parameter (tapi tuning eps bisa tricky).
+#
+# Keterbatasan DBSCAN:
+# - Sensitif terhadap densitas yang bervariasi (struggle dengan cluster
+#   yang sangat dense dan sangat sparse dalam dataset yang sama).
+# - Tidak scale-invariant: hasil bergantung pada unit fitur.
+#   WAJIB standardize sebelum DBSCAN!
+# - High-dimensional data: distance metrics kurang meaningful di dimensi tinggi
+#   (curse of dimensionality).
+#
+# Koneksi Teknik Elektro:
+# - DBSCAN = adaptive thresholding di feature space
+# - Eps = detection threshold
+# - Core points = reliable signal detection
 
 X_moons, y_moons = make_moons(n_samples=300, noise=0.1, random_state=42)
 
@@ -123,17 +205,54 @@ axes[2].set_title('Hierarchical (single linkage)')
 plt.tight_layout()
 plt.savefig('02_clustering_comparison.png', dpi=100, bbox_inches='tight')
 plt.close()
-print("\n📊 Saved: 02_clustering_comparison.png")
+print("\nOK Saved: 02_clustering_comparison.png")
 
 
 # ===========================================================
-# 📖 BAGIAN 3: PCA — Principal Component Analysis
+# BAGIAN 3: PCA - Principal Component Analysis
 # ===========================================================
 # PCA = cari arah variance terbesar dalam data
 # Mathematically: eigendecomposition dari covariance matrix
 #
-# Sebagai engineer: ini KLT (Karhunen-Loève Transform)!
-# Optimal linear transform untuk decorrelation & compression.
+# Matematika PCA (langkah demi langkah):
+# 1. Center data: X_centered = X - mean(X)
+#    (WAJIB! PCA sensitive ke origin)
+# 2. Compute covariance matrix: C = X_centered.T @ X_centered / (n-1)
+#    Element C[i,j] = covariance antara fitur i dan j.
+# 3. Eigendecomposition: C = V @ Lambda @ V.T
+#    V = matrix eigenvectors (principal components)
+#    Lambda = diagonal matrix eigenvalues (variance explained)
+# 4. Sort eigenvalues descending, eigenvectors mengikuti.
+# 5. Project: X_pca = X_centered @ V[:, :k]
+#
+# Variance Explained:
+# - Setiap PC menjelaskan proporsi variance = lambda_i / Sum(lambda)
+# - Cumulative variance = running sum dari variance explained.
+# - Pilih k berdasarkan threshold (misal 95% variance retained).
+#
+# Kenapa PCA penting?
+# - Dimensionality reduction: kurangi dimensi tanpa kehilangan informasi signifikan.
+# - Decorrelation: PC saling orthogonal (tidak berkorelasi).
+# - Noise reduction: noise biasanya ada di PC dengan eigenvalue kecil.
+# - Visualization: project ke 2D/3D untuk visualisasi.
+#
+# Hyperparameter kunci:
+# - n_components: jumlah PC. Bisa integer, float (variance ratio), atau None (semua).
+# - TIPS: Jika n_components = 0.95, PCA otomatis memilih k minimal untuk 95% variance.
+#
+# Keterbatasan PCA:
+# - Linear only: tidak bisa menangkap non-linear structure.
+#   Untuk non-linear, gunakan t-SNE, UMAP, atau Kernel PCA.
+# - Sensitif ke scale: fitur dengan variance besar akan mendominasi.
+#   WAJIB standardize sebelum PCA!
+# - Interpretabilitas: PC adalah kombinasi linear fitur asli,
+#   yang kadang sulit diinterpretasikan secara domain.
+#
+# Koneksi Teknik Elektro:
+# - PCA = Karhunen-Loeve Transform (KLT) - optimal decorrelation & compression
+# - Eigenvectors = basis functions (seperti Fourier series tapi data-adaptive)
+# - Eigenvalues = energy di setiap mode
+# - Truncated PCA = lossy compression (sama seperti JPEG!)
 
 # Generate high-dimensional data
 from sklearn.datasets import load_digits
@@ -145,7 +264,9 @@ print(f"\n=== PCA pada Digits Dataset ===")
 print(f"Original shape: {X_digits.shape}")
 
 # Standardize
-# PCA sensitive ke scale → harus standardize terlebih dahulu
+# PCA sensitive ke scale -> harus standardize terlebih dahulu
+# TIPS: Untuk image data, centering cukup (std ~ sama).
+# Untuk data sensor dengan unit berbeda, WAJIB standardize.
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X_digits)
 
@@ -160,6 +281,8 @@ cumulative_var = np.cumsum(pca.explained_variance_ratio_)
 fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
 # Variance explained per PC
+# PC1 selalu menjelaskan variance terbesar, PC2 kedua terbesar, dst.
+# Jika PC1 mendominasi (>80%), data hampir 1-dimensional.
 axes[0].plot(pca.explained_variance_ratio_[:30], 'bo-', markersize=4)
 axes[0].set_xlabel('Principal Component')
 axes[0].set_ylabel('Variance Explained')
@@ -167,6 +290,9 @@ axes[0].set_title('Variance per PC')
 axes[0].grid(True)
 
 # Cumulative variance
+# Threshold 95% adalah tradeoff yang umum:
+# - Terlalu rendah (<90%) = kehilangan informasi signifikan.
+# - Terlalu tinggi (>99%) = tidak ada pengurangan dimensi yang meaningful.
 axes[1].plot(cumulative_var, 'r-', linewidth=2)
 axes[1].axhline(y=0.95, color='k', linestyle='--', alpha=0.5, label='95% threshold')
 n_95 = np.argmax(cumulative_var >= 0.95) + 1
@@ -183,7 +309,7 @@ plt.tight_layout()
 plt.savefig('03_pca_variance.png', dpi=100, bbox_inches='tight')
 plt.close()
 print(f"  Components for 95% variance: {n_95} (dari 64)")
-print("📊 Saved: 03_pca_variance.png")
+print("OK Saved: 03_pca_variance.png")
 
 # 2D visualization
 fig, ax = plt.subplots(figsize=(10, 8))
@@ -191,21 +317,54 @@ scatter = ax.scatter(X_pca[:, 0], X_pca[:, 1], c=y_digits, cmap='tab10',
                      s=10, alpha=0.7)
 ax.set_xlabel('PC1')
 ax.set_ylabel('PC2')
-ax.set_title('Digits Dataset — PCA 2D Projection')
+ax.set_title('Digits Dataset - PCA 2D Projection')
 plt.colorbar(scatter)
 plt.savefig('04_pca_2d.png', dpi=100, bbox_inches='tight')
 plt.close()
-print("📊 Saved: 04_pca_2d.png")
+print("OK Saved: 04_pca_2d.png")
 
 
 # ===========================================================
-# 📖 BAGIAN 4: t-SNE — Non-linear Dimensionality Reduction
+# BAGIAN 4: t-SNE - Non-linear Dimensionality Reduction
 # ===========================================================
-# PCA = linear → preserves global structure
-# t-SNE = non-linear → preserves LOCAL structure (neighborhood)
+# PCA = linear -> preserves global structure
+# t-SNE = non-linear -> preserves LOCAL structure (neighborhood)
 #
-# Sangat bagus untuk visualisasi cluster di high-dimensional data
-# TAPI: mahal komputasi, dan perplexity harus di-tune
+# Matematika t-SNE:
+# 1. Compute pairwise similarity di high-dim space:
+#    p_{j|i} = exp(-||x_i - x_j||**2 / 2*sigma_i**2) / Sum_{k != i} exp(...)
+#    sigma_i ditentukan oleh perplexity (seberapa banyak neighbors yang dipertimbangkan).
+# 2. Compute pairwise similarity di low-dim space:
+#    q_{ij} = (1 + ||y_i - y_j||**2)**(-1) / Sum_{k != l} (1 + ||y_k - y_l||**2)**(-1)
+#    Ini adalah Student-t distribution (hence "t" in t-SNE).
+# 3. Minimize KL-divergence antara P dan Q menggunakan gradient descent.
+#
+# Hyperparameter kunci:
+# - perplexity: kira-kira jumlah neighbors yang dipertimbangkan.
+#   Biasanya 5-50. Default 30.
+#   Perplexity kecil = local structure, perplexity besar = global structure.
+#   PERINGATAN: perplexity tidak boleh lebih besar dari n_samples - 1.
+# - learning_rate: default "auto" (sekitar n/12). Terlalu besar = blob,
+#   terlalu kecil = clustered terlalu rapat.
+# - n_iter: default 1000. Naikkan untuk convergence yang lebih baik.
+# - early_exaggeration: default 12. Memisahkan cluster di awal training.
+#
+# Kenapa t-SNE penting?
+# - Sangat bagus untuk visualisasi cluster di high-dimensional data.
+# - Menangkap non-linear relationships yang PCA lewatkan.
+# - Wajib gunakan untuk EDA data high-dimensional.
+#
+# Keterbatasan t-SNE:
+# - Stochastic: hasil berbeda setiap run (gunakan random_state).
+# - Tidak preservasi global structure (jarak antar cluster tidak bermakna).
+# - Tidak bisa transform data baru (no transform method, hanya fit_transform).
+# - Mahal komputasi: O(n^2) sampai O(n log n) dengan Barnes-Hut.
+# - Parameters sensitive: perplexity dan learning_rate perlu di-tune.
+#
+# TIPS:
+# - Jalankan t-SNE berkali-kali dengan parameter berbeda.
+# - Jangan interpretasi jarak antar cluster (hanya local structure).
+# - Preprocessing dengan PCA ke ~50 dimensi bisa mempercepat t-SNE.
 
 print("\n=== t-SNE ===")
 tsne = TSNE(n_components=2, perplexity=30, random_state=42)
@@ -222,17 +381,42 @@ axes[1].set_title('t-SNE (non-linear)')
 plt.tight_layout()
 plt.savefig('05_pca_vs_tsne.png', dpi=100, bbox_inches='tight')
 plt.close()
-print("📊 Saved: 05_pca_vs_tsne.png")
-print("→ t-SNE biasanya memisahkan cluster lebih jelas untuk visualisasi")
+print("OK Saved: 05_pca_vs_tsne.png")
+print("-> t-SNE biasanya memisahkan cluster lebih jelas untuk visualisasi")
 
 
 # ===========================================================
-# 📖 BAGIAN 5: Anomaly Detection
+# BAGIAN 5: Anomaly Detection
 # ===========================================================
 # Sangat relevan untuk Teknik Elektro:
 # - Predictive maintenance (deteksi anomali mesin)
 # - Power quality monitoring
 # - Network intrusion detection
+#
+# Isolation Forest:
+# - Prinsip: outliers lebih "isolated" dan lebih mudah dipisahkan.
+# - Algoritma: secara random pilih fitur dan split threshold.
+#   Ulangi sampai setiap point terisolasi.
+# - Outliers membutuhkan fewer splits untuk diisolasi.
+# - Anomaly score = avg path length (shorter = more anomalous).
+#
+# Kenapa Isolation Forest bagus?
+# - Tidak memerlukan model "normal" secara eksplisit.
+# - Efisien: O(n log n) untuk training dan inference.
+# - Robust untuk high-dimensional data.
+# - Tidak perlu label anomaly (unsupervised).
+#
+# Hyperparameter kunci:
+# - contamination: proporsi outliers yang diharapkan (0.0 - 0.5).
+#   Default 'auto' (= 0.1). Ini MEMPENGARUHI threshold.
+#   PERINGATAN: contamination harus di-set berdasarkan domain knowledge.
+#   Terlalu rendah = banyak false negatives. Terlalu tinggi = banyak false positives.
+# - n_estimators: jumlah trees. Default 100.
+#
+# Alternatif methods:
+# - Local Outlier Factor (LOF): density-based. Bagus untuk local anomalies.
+# - One-Class SVM: mempelajari boundary data normal. Bagus untuk boundary complex.
+# - Elliptic Envelope: asumsikan Gaussian. Bagus untuk data Gaussian.
 
 from sklearn.ensemble import IsolationForest
 
@@ -245,8 +429,6 @@ X_mixed = np.vstack([X_normal, X_anomaly])
 y_truth = np.array([1] * n_normal + [-1] * n_anomaly)
 
 # Isolation Forest
-# Prinsip: outliers lebih "isolated" dan lebih mudah dipisahkan
-# Mengisolasi outlier membutuhkan fewer splits dari normal points
 iso_forest = IsolationForest(contamination=0.1, random_state=42)
 y_pred_if = iso_forest.fit_predict(X_mixed)
 
@@ -262,56 +444,56 @@ axes[1].set_title('Isolation Forest Prediction')
 plt.tight_layout()
 plt.savefig('06_anomaly_detection.png', dpi=100, bbox_inches='tight')
 plt.close()
-print("\n📊 Saved: 06_anomaly_detection.png")
+print("\nOK Saved: 06_anomaly_detection.png")
 
 
 # ===========================================================
-# 🏋️ EXERCISE 9: Unsupervised Analysis
+# LATIHAN 9: Unsupervised Analysis
 # ===========================================================
 """
-🎯 Learning Objectives:
+TARGET Learning Objectives:
    - Mengimplementasikan K-Means dari nol
    - Mengimplementasikan PCA dari nol
    - Mengaplikasikan unsupervised methods ke real dataset
 
-📋 LANGKAH-LANGKAH:
+PANDUAN LANGKAH-LANGKAH:
 
 STEP 1: Implementasi K-Means FROM SCRATCH (NumPy only)
-───────────────────────────────────────────────────────
+------------------------------------------------------
 Buat class KMeansScratch dengan algoritma Lloyd:
 
    a) __init__(self, k, max_iters=100, tol=1e-4)
    b) fit(X):
       - Random initialization centroid (pilih k random points dari X)
       - For iter in range(max_iters):
-        * Assign: labels = argmin ||X - centroids||²
+        * Assign: labels = argmin ||X - centroids||**2
         * Update: centroids = mean(X[labels==i]) untuk setiap i
         * Check convergence: if change < tol, break
         
-   c) predict(X): return argmin ||X - centroids||²
+   c) predict(X): return argmin ||X - centroids||**2
    
-   💡 KENAPA from scratch?
+   TIPS KENAPA from scratch?
      - Memahami algoritma secara mendalam
      - Memahami sensitivity ke inisialisasi
      - Memahami convergence criteria
 
-   🧪 Verification:
+   TEST Verification:
      - Compare dengan sklearn KMeans pada dataset yang sama
      - Inertia harus mendekati
      - Labels bisa berbeda (permutation) tapi clustering sama
 
 
 STEP 2: Implementasi K-Means++ Initialization
-─────────────────────────────────────────────
+---------------------------------------------
 K-Means++ = smart initialization untuk centroid.
 
    Algoritma:
    a) Pilih centroid pertama secara random
-   b) Untuk setiap point, hitung D(x)² = jarak ke centroid terdekat
-   c) Pilih centroid baru dengan probabilitas ∝ D(x)²
+   b) Untuk setiap point, hitung D(x)**2 = jarak ke centroid terdekat
+   c) Pilih centroid baru dengan probabilitas proporsional D(x)**2
    d) Ulangi sampai k centroid
    
-   💡 KENAPA K-Means++?
+   TIPS KENAPA K-Means++?
      - Menghindari poor initialization
      - Convergence lebih cepat
      - Hasil lebih konsisten
@@ -319,7 +501,7 @@ K-Means++ = smart initialization untuk centroid.
 
 
 STEP 3: Implementasi PCA FROM SCRATCH
-──────────────────────────────────────
+--------------------------------------
 Buat class PCAScratch:
 
    a) fit(X):
@@ -332,19 +514,19 @@ Buat class PCAScratch:
       - Project X ke top-k eigenvectors
       - return X @ eigenvectors[:, :k]
       
-   💡 KENAPA from scratch?
+   TIPS KENAPA from scratch?
      - Memahami bahwa PCA = eigendecomposition of covariance
      - Memahami bahwa PC = eigenvectors
      - Memahami bahwa variance explained = eigenvalues
 
-   🧪 Verification:
+   TEST Verification:
      - Compare dengan sklearn PCA
      - Eigenvalues harus sama (ordering bisa berbeda untuk degenerate)
      - Transformasi harus sama (sign bisa berbeda)
 
 
 STEP 4: Gunakan PCA + K-Means pada Real Dataset
-────────────────────────────────────────────────
+-----------------------------------------------
    Dataset: Digits (sudah di-load di atas)
    
    a) Apply PCA untuk reduce dimensionality ke 10, 20, 30
@@ -359,19 +541,19 @@ STEP 4: Gunakan PCA + K-Means pada Real Dataset
       - Mana digit yang paling sulit dipisahkan?
 
 
-💡 HINTS:
+TIPS HINTS:
    - np.linalg.eigh untuk symmetric matrix (covariance)
    - np.argsort untuk sorting eigenvalues
    - np.linalg.norm(X[:, None] - centroids, axis=2) untuk distance matrix
    - np.argmin(distance_matrix, axis=1) untuk labels
 
-⚠️ COMMON MISTAKES:
+PERINGATAN COMMON MISTAKES:
    - Tidak center data sebelum PCA
    - Lupa sort eigenvalues descending
-   - K-Means tanpa multiple init → stuck di local minimum
+   - K-Means tanpa multiple init -> stuck di local minimum
    - Menghitung covariance dengan n bukan n-1 (bias correction)
 
-🎯 EXPECTED OUTPUT:
+TARGET EXPECTED OUTPUT:
    - KMeansScratch yang matching dengan sklearn
    - PCAScratch yang matching dengan sklearn
    - Analysis: optimal PC untuk digit clustering
@@ -380,23 +562,23 @@ STEP 4: Gunakan PCA + K-Means pada Real Dataset
 
 
 # ===========================================================
-# 🔥 CHALLENGE: Anomaly Detection untuk Power Quality
+# CHALLENGE: Anomaly Detection untuk Power Quality
 # ===========================================================
 """
-🎯 Learning Objectives:
+TARGET Learning Objectives:
    - Membangun anomaly detection system untuk domain power systems
    - Menggabungkan time domain dan frequency domain features
    - Membandingkan multiple unsupervised methods
 
-📋 LANGKAH-LANGKAH:
+PANDUAN LANGKAH-LANGKAH:
 
 STEP 1: Generate Data Normal dan Anomali
-─────────────────────────────────────────
+-----------------------------------------
 Simulasi monitoring kualitas daya listrik:
 
    a) Data normal (800 samples):
       - Sinyal 50Hz sinusoidal, THD < 5%
-      - Voltage: 220V ± 5%
+      - Voltage: 220V +/- 5%
       - Duration: 1 detik per sample
       - Sampling rate: 1000 Hz
       
@@ -405,16 +587,16 @@ Simulasi monitoring kualitas daya listrik:
       - Voltage swell (tegangan naik > 10%)
       - Harmonic distortion (THD > 8%)
       - Transient spikes (impulse noise)
-      - Frequency deviation (49-51 Hz → 48 atau 52 Hz)
+      - Frequency deviation (49-51 Hz -> 48 atau 52 Hz)
 
-   💡 KENAPA anomalies ini?
+   TIPS KENAPA anomalies ini?
      - Realistic untuk power systems
      - Setiap anomaly punya signature yang berbeda
      - Penting untuk protective relaying
 
 
 STEP 2: Extract Features
-────────────────────────
+------------------------
 Dari setiap window (1 detik = 1000 samples):
 
    Time domain:
@@ -428,14 +610,14 @@ Dari setiap window (1 detik = 1000 samples):
    - Harmonic content (3rd, 5th, 7th)
    - Spectral energy
    
-   💡 KENAPA features ini?
+   TIPS KENAPA features ini?
      - Voltage sag/swell terdeteksi di time domain
      - Harmonic distortion terdeteksi di frequency domain
      - Crest factor sensitif terhadap transients
 
 
 STEP 3: Apply Unsupervised Methods
-───────────────────────────────────
+-----------------------------------
    a) Isolation Forest:
       - contamination = estimated anomaly ratio (0.2)
       - Evaluate: precision, recall, F1
@@ -454,7 +636,7 @@ STEP 3: Apply Unsupervised Methods
 
 
 STEP 4: Compare Performance
-───────────────────────────
+---------------------------
    Metrics:
    - Precision: berapa detected anomaly yang benar?
    - Recall: berapa anomaly yang tertangkap?
@@ -468,26 +650,26 @@ STEP 4: Compare Performance
 
 
 STEP 5: Analyze Results
-───────────────────────
+-----------------------
    a) Method mana yang terbaik untuk setiap jenis anomaly?
    b) Fitur mana yang paling diskriminatif?
    c) Apakah ada anomaly yang tidak tertangkap? Kenapa?
    d) Bagaimana handle false alarms di production?
 
 
-💡 HINTS:
+TIPS HINTS:
    - np.fft.rfft untuk frequency domain analysis
-   - THD = sqrt(sum(harmonics²)) / fundamental
+   - THD = sqrt(sum(harmonics**2)) / fundamental
    - IsolationForest(contamination=0.2) untuk 20% anomaly
-   - One-Class SVM nu parameter ≈ expected anomaly ratio
+   - One-Class SVM nu parameter ~ expected anomaly ratio
 
-⚠️ COMMON MISTAKES:
-   - Training anomaly detector pada data dengan anomaly → overfit
-   - Tidak scale features → distance-based methods bias
-   - Mengabaikan temporal patterns → anomaly mungkin sequential
-   - Threshold terlalu strict → banyak false negatives
+PERINGATAN COMMON MISTAKES:
+   - Training anomaly detector pada data dengan anomaly -> overfit
+   - Tidak scale features -> distance-based methods bias
+   - Mengabaikan temporal patterns -> anomaly mungkin sequential
+   - Threshold terlalu strict -> banyak false negatives
 
-🎯 EXPECTED OUTPUT:
+TARGET EXPECTED OUTPUT:
    - Anomaly detection system dengan F1 > 0.85
    - Per-method comparison table
    - Feature importance analysis
@@ -497,5 +679,5 @@ Ini SANGAT relevan untuk power systems engineer!
 """
 
 print("\n" + "="*50)
-print("✅ Modul selesai! Lanjut ke: 03-classical-ml/03_feature_engineering.py")
+print("OK Modul selesai! Lanjut ke: 03-classical-ml/03_feature_engineering.py")
 print("="*50)

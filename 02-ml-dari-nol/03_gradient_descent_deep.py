@@ -1,6 +1,6 @@
 """
 =============================================================
-FASE 2 — MODUL 3: GRADIENT DESCENT DEEP DIVE
+FASE 2 - MODUL 3: GRADIENT DESCENT DEEP DIVE
 =============================================================
 Gradient descent adalah JANTUNG dari semua ML modern.
 Kalau kamu benar-benar paham GD + variannya, kamu bisa
@@ -23,16 +23,30 @@ np.random.seed(42)
 
 
 # ===========================================================
-# 📖 BAGIAN 1: Visualisasi Loss Landscape
+# BAGIAN 1: Visualisasi Loss Landscape
 # ===========================================================
 # Sebelum optimasi, kita harus "lihat" apa yang dioptimasi.
 # Loss landscape = surface yang ingin kita minimalkan.
 # Visualisasi membantu memahami kenapa optimizer tertentu
 # bekerja lebih baik dari yang lain.
+#
+# DETAIL MATEMATIKA:
+# Loss landscape untuk model dengan parameter theta adalah
+# surface L(theta) di ruang parameter.
+# - Local minimum: titik dimana gradient = 0 dan Hessian positive definite
+# - Global minimum: local minimum dengan nilai loss terendah
+# - Saddle point: gradient = 0 tapi Hessian indefinite (ada eigenvalue positif dan negatif)
+# - Plateau: region dengan gradient hampir 0 (optimizer bisa "stuck")
+#
+# Koneksi Teknik Elektro:
+# - Loss landscape = error surface di adaptive control
+# - Local minima = stable equilibrium points
+# - Saddle points = unstable equilibrium
+# - Gradient descent = system dynamics yang converge ke equilibrium
 
 def rosenbrock(x, y):
     """
-    Rosenbrock function — classic optimization test.
+    Rosenbrock function - classic optimization test.
     
     Parameters:
     -----------
@@ -42,14 +56,16 @@ def rosenbrock(x, y):
     Returns:
     --------
     np.ndarray atau scalar
-        f(x,y) = (1-x)² + 100(y-x²)²
+        f(x,y) = (1-x)^2 + 100*(y-x^2)^2
         
     Notes:
     ------
     - Global minimum: (1, 1) dengan f(1,1) = 0
-    - Valley yang sempit dan melengkung → sulit di-navigate
+    - Valley yang sempit dan melengkung -> sulit di-navigate
     - Sering disebut "banana function" karena bentuk contour-nya
     - Standard benchmark untuk testing optimization algorithms
+    - Hessian di minimum = [[802, -400], [-400, 200]]
+      Condition number ~ 2500 (sangat ill-conditioned!)
     
     Koneksi Teknik Elektro:
     - Mirip dengan non-convex optimization di adaptive control
@@ -61,7 +77,7 @@ def rosenbrock(x, y):
 
 def simple_quadratic(x, y):
     """
-    Fungsi sederhana: f(x,y) = x² + 10y²
+    Fungsi sederhana: f(x,y) = x^2 + 10*y^2
     
     Parameters:
     -----------
@@ -71,14 +87,17 @@ def simple_quadratic(x, y):
     Returns:
     --------
     np.ndarray atau scalar
-        f(x,y) = x² + 10y²
+        f(x,y) = x^2 + 10*y^2
         
     Notes:
     ------
     - Global minimum: (0, 0)
     - Elliptical contours (ill-conditioned)
     - Lebih mudah dari Rosenbrock, tapi masih menantang untuk vanilla GD
-    - Condition number = 10 (ratio eigenvalues)
+    - Condition number = 10 (ratio eigenvalues Hessian)
+    - Hessian = [[2, 0], [0, 20]]
+    - Gradient di x-direction jauh lebih kecil dari y-direction
+      -> GD akan zig-zag (oscillate di y, lambat di x)
     """
     return x**2 + 10 * y**2
 
@@ -94,19 +113,19 @@ X, Y = np.meshgrid(x_range, y_range)
 # Quadratic (mudah)
 Z1 = simple_quadratic(X, Y)
 axes[0].contour(X, Y, Z1, levels=30, cmap='viridis')
-axes[0].set_title('Quadratic: x² + 10y² (mudah)')
+axes[0].set_title('Quadratic: x^2 + 10*y^2 (mudah)')
 axes[0].set_xlabel('x')
 axes[0].set_ylabel('y')
 axes[0].plot(0, 0, 'r*', markersize=15, label='Minimum')
 axes[0].legend()
 
-# Rosenbrock (sulit — valley yang sempit)
+# Rosenbrock (sulit - valley yang sempit)
 x_range2 = np.linspace(-2, 2, 200)
 y_range2 = np.linspace(-1, 3, 200)
 X2, Y2 = np.meshgrid(x_range2, y_range2)
 Z2 = rosenbrock(X2, Y2)
 axes[1].contour(X2, Y2, Z2, levels=np.logspace(-1, 3, 30), cmap='viridis')
-axes[1].set_title('Rosenbrock (sulit — narrow valley)')
+axes[1].set_title('Rosenbrock (sulit - narrow valley)')
 axes[1].set_xlabel('x')
 axes[1].set_ylabel('y')
 axes[1].plot(1, 1, 'r*', markersize=15, label='Minimum')
@@ -115,12 +134,38 @@ axes[1].legend()
 plt.tight_layout()
 plt.savefig('01_loss_landscapes.png', dpi=100, bbox_inches='tight')
 plt.close()
-print("📊 Saved: 01_loss_landscapes.png")
+print("Saved: 01_loss_landscapes.png")
 
 
 # ===========================================================
-# 📖 BAGIAN 2: Vanilla GD vs SGD vs Mini-batch
+# BAGIAN 2: Vanilla GD vs SGD vs Mini-batch
 # ===========================================================
+# Ada 3 varian utama gradient descent:
+# 1. Full-batch GD: update menggunakan seluruh dataset
+# 2. Stochastic GD (SGD): update per sample
+# 3. Mini-batch GD: update per subset (batch)
+#
+# DETAIL MATEMATIKA:
+# Full-batch: theta := theta - lr * grad(L_full)
+#   - grad(L_full) = (1/n) * Sum grad(L_i)
+#   - Gradient paling akurat (true gradient)
+#   - Tapi mahal untuk dataset besar
+#
+# SGD: theta := theta - lr * grad(L_i)
+#   - grad(L_i) = gradient untuk satu sample
+#   - Noisy tapi unbiased estimator dari true gradient
+#   - E[grad(L_i)] = grad(L_full)
+#   - Variance tinggi tapi computation per step murah
+#
+# Mini-batch: theta := theta - lr * grad(L_batch)
+#   - grad(L_batch) = (1/batch_size) * Sum grad(L_i) untuk batch
+#   - Kompromi antara akurasi dan kecepatan
+#   - Batch size = tradeoff antara variance dan computation
+#
+# Koneksi Teknik Elektro:
+# - Full-batch = offline processing (semua data tersedia)
+# - SGD = real-time processing (sample-by-sample)
+# - Mini-batch = frame-based processing (DSP buffer)
 
 def generate_regression_data(n=500):
     """
@@ -137,6 +182,12 @@ def generate_regression_data(n=500):
         Features.
     y : np.ndarray, shape (n,)
         Targets dengan linear relationship + noise.
+        
+    Notes:
+    ------
+    - y = 3*x1 + 2*x2 + 1 + noise
+    - True weights = [3, 2], true bias = 1
+    - Noise Gaussian N(0, 0.5^2)
     """
     X = np.random.randn(n, 2)
     y = 3 * X[:, 0] + 2 * X[:, 1] + 1 + 0.5 * np.random.randn(n)
@@ -164,7 +215,7 @@ class GDOptimizer:
     - Vanilla GD: update menggunakan seluruh dataset
     - SGD: update per sample
     - Mini-batch: update per subset
-    - Koneksi Teknik Elektro: mirik dengan batch processing vs
+    - Koneksi Teknik Elektro: mirip dengan batch processing vs
       real-time processing di signal processing
     """
     
@@ -194,6 +245,12 @@ class GDOptimizer:
             Gradient untuk weights.
         db : float
             Gradient untuk bias.
+            
+        Notes:
+        ------
+        Gradient MSE = (2/n_batch) * X_batch.T @ (y_pred - y_batch)
+        Untuk SGD (batch_size=1): dw = 2 * x_i * (y_pred - y_i)
+        Untuk full-batch: dw = (2/n) * X.T @ (y_pred - y)
         """
         y_pred = X_batch @ w + b
         error = y_pred - y_batch
@@ -245,6 +302,7 @@ class GDOptimizer:
         - Gradient paling stabil (low variance)
         - Tapi lambat untuk dataset besar
         - Memory requirement tinggi jika dataset besar
+        - Convergence teoritis: O(1/epsilon) untuk convex function
         """
         w = np.zeros(self.X.shape[1])
         b = 0.0
@@ -282,6 +340,8 @@ class GDOptimizer:
         - Gradient sangat noisy tapi computation per update cepat
         - Noise bisa membantu escape local minima
         - Require smaller learning rate
+        - Setiap epoch = 1 pass melalui seluruh dataset (n updates)
+        - Convergence teoritis: O(1/epsilon^2) untuk convex
         """
         w = np.zeros(self.X.shape[1])
         b = 0.0
@@ -327,6 +387,9 @@ class GDOptimizer:
         - Batch size = tradeoff antara stability dan speed
         - 32-256 adalah range yang umum dipakai
         - GPU-friendly (parallel processing per batch)
+        - Batch size kecil -> lebih noisy tapi generalization lebih baik
+        - Batch size besar -> lebih stabil tapi bisa stuck di sharp minima
+        - Convergence teoritis: di antara GD dan SGD
         """
         w = np.zeros(self.X.shape[1])
         b = 0.0
@@ -350,7 +413,7 @@ class GDOptimizer:
 
 # Compare
 opt = GDOptimizer(X_data, y_data)
-print("Training 3 varian GD...")
+print("\nTraining 3 varian GD...")
 _, _, hist_gd = opt.vanilla_gd(lr=0.1, n_iter=50)
 _, _, hist_sgd = opt.sgd(lr=0.01, n_iter=50)
 _, _, hist_mb = opt.mini_batch_gd(lr=0.05, n_iter=50, batch_size=32)
@@ -367,19 +430,38 @@ plt.yscale('log')
 plt.grid(True)
 plt.savefig('02_gd_comparison.png', dpi=100, bbox_inches='tight')
 plt.close()
-print("📊 Saved: 02_gd_comparison.png")
+print("Saved: 02_gd_comparison.png")
 
 
 # ===========================================================
-# 📖 BAGIAN 3: Momentum
+# BAGIAN 3: Momentum
 # ===========================================================
 # Masalah: GD lambat di valley yang sempit (zig-zag)
-# Solusi: Momentum — gunakan "inersia" dari update sebelumnya
+# Solusi: Momentum - gunakan "inersia" dari update sebelumnya
 #
-# v_t = β * v_{t-1} + (1-β) * gradient
-# θ = θ - lr * v_t
+# DETAIL MATEMATIKA:
+# Update rule dengan momentum:
+# v_t = beta * v_{t-1} + (1-beta) * gradient
+# theta_t = theta_{t-1} - lr * v_t
 #
-# Analogi: bola yang menggelinding — semakin cepat di arah konsisten
+# Atau dalam variasi populer:
+# v_t = beta * v_{t-1} + gradient
+# theta_t = theta_{t-1} - lr * v_t
+#
+# beta (momentum coefficient) = 0.9 adalah nilai yang umum.
+# - beta = 0: tidak ada momentum (vanilla GD)
+# - beta dekat 1: momentum sangat kuat (inersia besar)
+#
+# Efek momentum:
+# - Arah konsisten -> velocity bertambah (accelerate)
+# - Arah berubah -> velocity berkurang (damp oscillation)
+# - Di valley sempit: mengurangi zig-zag
+#
+# Koneksi Teknik Elektro:
+# - Momentum = inersia di mechanical systems
+# - Mirip dengan damping di control systems
+# - Velocity = state variable yang menyimpan history
+# - beta = damping coefficient
 
 class MomentumOptimizer:
     """
@@ -395,7 +477,7 @@ class MomentumOptimizer:
     Notes:
     ------
     - Momentum = exponential moving average dari gradients
-    - β (momentum) = 0.9 adalah nilai yang umum
+    - beta (momentum) = 0.9 adalah nilai yang umum
     - Mempercepat convergence di arah konsisten
     - Mengurangi oscillation di arah yang tidak konsisten
     - Koneksi Teknik Elektro: mirip dengan inersia di mechanical systems
@@ -418,6 +500,7 @@ class MomentumOptimizer:
             Learning rate.
         momentum : float, default 0.9
             Momentum coefficient (0 = no momentum, 1 = infinite momentum).
+            Nilai umum: 0.8 - 0.99.
         n_iter : int, default 100
             Jumlah iterasi.
             
@@ -427,6 +510,18 @@ class MomentumOptimizer:
             Final position.
         history : np.ndarray
             Trajectory of positions.
+            
+        Notes:
+        ------
+        Update rule:
+        v_t = beta * v_{t-1} + (1-beta) * g_t
+        theta_t = theta_{t-1} - lr * v_t
+        
+        Interpretasi:
+        - v adalah "velocity" (kecepatan)
+        - beta adalah "friction" (mengurangi velocity dari iterasi sebelumnya)
+        - (1-beta)*g_t adalah "acceleration" dari gradient saat ini
+        - Semakin besar beta -> semakin banyak mempertahankan velocity lama
         """
         pos = np.array(start, dtype=float)
         velocity = np.zeros_like(pos)
@@ -434,9 +529,9 @@ class MomentumOptimizer:
         
         for _ in range(n_iter):
             g = self.grad(pos)
-            # Update velocity: v = β*v + (1-β)*g
+            # Update velocity: v = beta*v + (1-beta)*g
             velocity = momentum * velocity + (1 - momentum) * g
-            # Update position: θ = θ - lr * v
+            # Update position: theta = theta - lr * v
             pos = pos - lr * velocity
             history.append(pos.copy())
         
@@ -450,10 +545,10 @@ def quad_func(p):
 
 def quad_grad(p):
     """
-    Gradient dari f(x,y) = x² + 10y².
+    Gradient dari f(x,y) = x^2 + 10*y^2.
     
-    ∂f/∂x = 2x
-    ∂f/∂y = 20y
+    df/dx = 2*x
+    df/dy = 20*y
     """
     return np.array([2 * p[0], 20 * p[1]])
 
@@ -464,7 +559,7 @@ optimizer = MomentumOptimizer(quad_func, quad_grad)
 fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
 for ax, momentum, title in [(axes[0], 0.0, 'Vanilla GD (no momentum)'),
-                              (axes[1], 0.9, 'With Momentum (β=0.9)')]:
+                              (axes[1], 0.9, 'With Momentum (beta=0.9)')]:
     _, history = optimizer.optimize([2.5, 2.5], lr=0.05, momentum=momentum, n_iter=50)
     
     # Contour
@@ -486,20 +581,42 @@ for ax, momentum, title in [(axes[0], 0.0, 'Vanilla GD (no momentum)'),
 plt.tight_layout()
 plt.savefig('03_momentum.png', dpi=100, bbox_inches='tight')
 plt.close()
-print("📊 Saved: 03_momentum.png")
+print("Saved: 03_momentum.png")
 
 
 # ===========================================================
-# 📖 BAGIAN 4: Adam Optimizer
+# BAGIAN 4: Adam Optimizer
 # ===========================================================
 # Adam = Adaptive Moment Estimation
 # Kombinasi dari Momentum + RMSProp
 # Ini DEFAULT optimizer di deep learning!
 #
-# Analogi: Adam seperti PID controller untuk optimization:
-# - Momentum (first moment) → "I" (integral, akumulasi)
-# - RMSProp (second moment) → adaptive gain per parameter
-# - Bias correction → transient response handling
+# DETAIL MATEMATIKA:
+# Adam menggunakan dua moment:
+# - First moment (m): exponential moving average dari gradients
+#   m_t = beta1 * m_{t-1} + (1-beta1) * g_t
+# - Second moment (v): exponential moving average dari squared gradients
+#   v_t = beta2 * v_{t-1} + (1-beta2) * g_t^2
+#
+# Bias correction (penting di awal training!):
+# - m_hat_t = m_t / (1 - beta1^t)
+# - v_hat_t = v_t / (1 - beta2^t)
+# - Tanpa bias correction, m dan v mendekati 0 di awal (karena diinisialisasi 0)
+#
+# Update rule:
+# theta_t = theta_{t-1} - lr * m_hat_t / (sqrt(v_hat_t) + epsilon)
+#
+# Interpretasi:
+# - m_hat_t / sqrt(v_hat_t) = signal-to-noise ratio
+# - Semakin besar variance gradient -> step size lebih kecil
+# - Semakin konsisten gradient -> step size lebih besar
+# - Epsilon mencegah division by zero
+#
+# Analogi PID Controller:
+# - Momentum (first moment) -> "I" (integral, akumulasi error)
+# - RMSProp (second moment) -> adaptive gain per parameter
+# - Bias correction -> transient response handling
+# - lr -> overall controller gain
 
 class AdamOptimizer:
     """
@@ -557,11 +674,17 @@ class AdamOptimizer:
         ------
         Algoritma Adam per iterasi t:
         1. g_t = gradient
-        2. m_t = β1 * m_{t-1} + (1-β1) * g_t  (first moment)
-        3. v_t = β2 * v_{t-1} + (1-β2) * g_t²  (second moment)
-        4. m̂_t = m_t / (1-β1^t)  (bias correction)
-        5. v̂_t = v_t / (1-β2^t)  (bias correction)
-        6. θ_t = θ_{t-1} - lr * m̂_t / (√v̂_t + ε)
+        2. m_t = beta1 * m_{t-1} + (1-beta1) * g_t  (first moment)
+        3. v_t = beta2 * v_{t-1} + (1-beta2) * g_t^2  (second moment)
+        4. m_hat_t = m_t / (1-beta1^t)  (bias correction)
+        5. v_hat_t = v_t / (1-beta2^t)  (bias correction)
+        6. theta_t = theta_{t-1} - lr * m_hat_t / (sqrt(v_hat_t) + epsilon)
+        
+        Kenapa bias correction penting?
+        - m_0 = 0, v_0 = 0
+        - Iterasi 1: m_1 = (1-beta1)*g_1 -> sangat kecil (karena 1-beta1 ~ 0.1)
+        - Tanpa correction: step size sangat kecil di awal
+        - Dengan correction: m_hat_1 = g_1 (seperti vanilla GD)
         """
         pos = np.array(start, dtype=float)
         m = np.zeros_like(pos)  # first moment (mean of gradients)
@@ -592,8 +715,8 @@ def rosenbrock_grad(p):
     """
     Gradient dari Rosenbrock function.
     
-    ∂f/∂x = -2(1-x) + 400x(x²-y)
-    ∂f/∂y = 200(y-x²)
+    df/dx = -2*(1-x) + 400*x*(x^2-y)
+    df/dy = 200*(y-x^2)
     """
     x, y = p
     dx = -2*(1-x) + 400*x*(x**2 - y)
@@ -606,7 +729,7 @@ fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 
 optimizers = [
     ('Vanilla GD', lambda: MomentumOptimizer(rosenbrock, rosenbrock_grad).optimize(start, lr=0.001, momentum=0.0, n_iter=500)),
-    ('Momentum (β=0.9)', lambda: MomentumOptimizer(rosenbrock, rosenbrock_grad).optimize(start, lr=0.001, momentum=0.9, n_iter=500)),
+    ('Momentum (beta=0.9)', lambda: MomentumOptimizer(rosenbrock, rosenbrock_grad).optimize(start, lr=0.001, momentum=0.9, n_iter=500)),
     ('Adam', lambda: AdamOptimizer(lr=0.01).optimize(rosenbrock_grad, start, n_iter=500)),
 ]
 
@@ -628,18 +751,37 @@ for ax, (name, opt_fn) in zip(axes, optimizers):
 plt.tight_layout()
 plt.savefig('04_optimizers_comparison.png', dpi=100, bbox_inches='tight')
 plt.close()
-print("📊 Saved: 04_optimizers_comparison.png")
+print("Saved: 04_optimizers_comparison.png")
 
 print("\n=== Optimizer Summary ===")
 print("SGD:      Simpel, tapi zig-zag di landscape yang ill-conditioned")
-print("Momentum: Lebih smooth, tapi perlu tune β")
+print("Momentum: Lebih smooth, tapi perlu tune beta")
 print("Adam:     Almost always works! Default choice untuk deep learning")
 print("         Tapi bisa overshoot di beberapa kasus (lihat AdamW)")
 
 
 # ===========================================================
-# 📖 BAGIAN 5: Learning Rate — Efek & Scheduling
+# BAGIAN 5: Learning Rate - Efek & Scheduling
 # ===========================================================
+# Learning rate adalah hyperparameter PALING PENTING di GD.
+# Efeknya lebih besar dari pilihan optimizer!
+#
+# DETAIL MATEMATIKA:
+# Update: theta := theta - lr * gradient
+# - lr terlalu kecil: convergence sangat lambat, bisa stuck di local minimum
+# - lr terlalu besar: divergence (oscillate atau NaN)
+# - lr "just right": smooth convergence
+#
+# Learning rate scheduling:
+# - Step decay: lr = lr0 * gamma^(epoch // step_size)
+# - Exponential decay: lr = lr0 * exp(-k * epoch)
+# - Cosine annealing: lr = lr_min + 0.5*(lr_max-lr_min)*(1+cos(pi*epoch/max_epoch))
+# - Warmup: lr naik linear dari 0 ke lr_target di awal training
+#
+# Kenapa scheduling penting?
+# - LR besar di awal: cepat converge ke region optimal
+# - LR kecil di akhir: fine-tuning untuk presisi
+# - Warmup: menghindari "thermal shock" ke model di awal training
 
 print("\n=== Learning Rate Experiment ===")
 opt = GDOptimizer(X_data, y_data)
@@ -667,74 +809,77 @@ for ax, lr, title in zip(axes, learning_rates, titles):
 plt.tight_layout()
 plt.savefig('05_learning_rate_effect.png', dpi=100, bbox_inches='tight')
 plt.close()
-print("📊 Saved: 05_learning_rate_effect.png")
+print("Saved: 05_learning_rate_effect.png")
 
 
 # ===========================================================
-# 🏋️ EXERCISE 6: Implementasi Optimizer
+# LATIHAN 6: Implementasi Optimizer
 # ===========================================================
 """
-🎯 Learning Objectives:
+TARGET Learning Objectives:
    - Memahami RMSProp dan Nesterov Accelerated Gradient
    - Mengimplementasikan learning rate warmup
    - Membandingkan performa optimizer pada fungsi yang sulit
 
-📋 LANGKAH-LANGKAH:
+PANDUAN LANGKAH-LANGKAH:
 
 STEP 1: Implementasi RMSProp dari nol
-──────────────────────────────────────
+-------------------------------------
 RMSProp = Root Mean Square Propagation.
 
    Update rule:
-   v_t = β * v_{t-1} + (1-β) * g²
-   θ_t = θ_{t-1} - lr * g / (√v_t + ε)
+   v_t = beta * v_{t-1} + (1-beta) * g^2
+   theta_t = theta_{t-1} - lr * g / (sqrt(v_t) + epsilon)
    
-   💡 Apa yang harus dilakukan:
+   TIPS: Apa yang harus dilakukan:
      a) Buat class RMSPropOptimizer
      b) Simpan state v (second moment)
      c) Update seperti rumus di atas
      
-   💡 KENAPA RMSProp?
+   TIPS: KENAPA RMSProp?
      - Adaptive learning rate per parameter
-     - Parameter dengan gradient besar → lr lebih kecil
-     - Parameter dengan gradient kecil → lr lebih besar
+     - Parameter dengan gradient besar -> lr lebih kecil
+     - Parameter dengan gradient kecil -> lr lebih besar
      - Mengatasi vanishing gradient untuk beberapa parameter
      
-   ⚠️ Hati-hati:
-     - β umumnya 0.9 atau 0.99
+   PERINGATAN: Hati-hati:
+     - beta umumnya 0.9 atau 0.99
      - v diinisialisasi ke 0
      - Tanpa bias correction (tidak seperti Adam)
+     - Epsilon penting untuk mencegah division by zero
 
 
 STEP 2: Implementasi Nesterov Accelerated Gradient (NAG)
-─────────────────────────────────────────────────────────
+--------------------------------------------------------
 NAG = Momentum dengan "look-ahead".
 
    Update rule:
-   g = ∇f(θ - β * v_{t-1})  ← gradient di posisi "lookahead"
-   v_t = β * v_{t-1} + lr * g
-   θ_t = θ_{t-1} - v_t
+   g = grad(f)(theta - beta * v_{t-1})  <- gradient di posisi "lookahead"
+   v_t = beta * v_{t-1} + lr * g
+   theta_t = theta_{t-1} - v_t
    
-   💡 Apa yang harus dilakukan:
+   TIPS: Apa yang harus dilakukan:
      a) Buat class NAGOptimizer
-     b) Hitung gradient di posisi θ - β*v (bukan di θ)
+     b) Hitung gradient di posisi theta - beta*v (bukan di theta)
      c) Update velocity dan position
      
-   💡 KENAPA NAG?
+   TIPS: KENAPA NAG?
      - "Melihat" ke depan sebelum melangkah
      - Lebih stable dari momentum sederhana
      - Convergence lebih cepat di convex functions
+     - Mengurangi oscillation lebih efektif
      
-   ⚠️ Hati-hati:
-     - Gradient dihitung di posisi yang berbeda dari θ
+   PERINGATAN: Hati-hati:
+     - Gradient dihitung di posisi yang berbeda dari theta
      - Implementasi bisa tricky kalau tidak hati-hati
+     - Perlu two-step update: lookahead lalu gradient
 
 
 STEP 3: Implementasi Learning Rate Warmup
-─────────────────────────────────────────
+-----------------------------------------
 Warmup = mulai dari lr kecil, naik linear ke lr target.
 
-   💡 Schedule:
+   TIPS: Schedule:
    - Epoch 1-N_warmup: lr naik linear dari lr_min ke lr_max
    - Epoch N_warmup+: cosine decay dari lr_max ke lr_min
    
@@ -742,16 +887,17 @@ Warmup = mulai dari lr kecil, naik linear ke lr target.
    lr = lr_min + (lr_max - lr_min) * (epoch / N_warmup)
    
    Formula cosine decay:
-   lr = lr_min + 0.5 * (lr_max - lr_min) * (1 + cos(π * t / T))
+   lr = lr_min + 0.5 * (lr_max - lr_min) * (1 + cos(pi * t / T))
    
-   💡 KENAPA warmup?
+   TIPS: KENAPA warmup?
      - Di awal training, gradients bisa besar dan noisy
      - Warmup menghindari "thermal shock" ke model
      - Standard di training Transformer/BERT
+     - Membantu stabilitas di awal training
 
 
 STEP 4: Bandingkan Semua Optimizer
-──────────────────────────────────
+----------------------------------
 Gunakan Rosenbrock function untuk perbandingan.
 
    Optimizer yang diuji:
@@ -771,20 +917,20 @@ Gunakan Rosenbrock function untuk perbandingan.
    - Plot loss curve (satu figure, semua optimizer)
 
 
-💡 HINTS:
+TIPS HINTS:
    - Untuk RMSProp, v diinisialisasi ke zeros
    - Untuk NAG, hati-hati dengan posisi lookahead
    - Untuk warmup, simpan lr_history untuk plotting
    - Gunakan learning rate yang sama untuk fair comparison
    - Rosenbrock: lr kecil (~0.001) untuk GD, lebih besar untuk Adam (~0.01)
 
-⚠️ COMMON MISTAKES:
-   - RMSProp tanpa epsilon → division by zero
+PERINGATAN COMMON MISTAKES:
+   - RMSProp tanpa epsilon -> division by zero
    - NAG menghitung gradient di posisi salah
-   - Warmup terlalu pendek → tidak ada efek
+   - Warmup terlalu pendek -> tidak ada efek
    - Membandingkan dengan hyperparameters yang tidak fair
 
-🎯 EXPECTED OUTPUT:
+TARGET EXPECTED OUTPUT:
    - Adam dan RMSProp converge paling cepat
    - Vanilla GD zig-zag di valley
    - NAG lebih stabil dari Momentum
@@ -793,18 +939,18 @@ Gunakan Rosenbrock function untuk perbandingan.
 
 
 # ===========================================================
-# 🔥 CHALLENGE: Gradient Descent Visualizer
+# CHALLENGE: Gradient Descent Visualizer
 # ===========================================================
 """
-🎯 Learning Objectives:
+TARGET Learning Objectives:
    - Membangun interactive visualization untuk optimizers
    - Memperdalam intuisi tentang optimization landscape
    - Mengembangkan tools untuk debugging dan teaching
 
-📋 LANGKAH-LANGKAH:
+PANDUAN LANGKAH-LANGKAH:
 
 STEP 1: Design Interactive Visualizer
-──────────────────────────────────────
+-------------------------------------
 Buat script Python yang menerima input dari user:
 
    Input parameters:
@@ -814,13 +960,13 @@ Buat script Python yang menerima input dari user:
    - Starting point [x, y]
    - Number of iterations
    
-   💡 Fungsi tambahan yang bisa diuji:
-   - Beale: f(x,y) = (1.5-x+xy)² + (2.25-x+xy²)² + (2.625-x+xy³)²
-   - Himmelblau: f(x,y) = (x²+y-11)² + (x+y²-7)² (4 global minima!)
+   TIPS: Fungsi tambahan yang bisa diuji:
+   - Beale: f(x,y) = (1.5-x+x*y)^2 + (2.25-x+x*y^2)^2 + (2.625-x+x*y^3)^2
+   - Himmelblau: f(x,y) = (x^2+y-11)^2 + (x+y^2-7)^2 (4 global minima!)
 
 
 STEP 2: Implementasi Real-Time Visualization
-─────────────────────────────────────────────
+--------------------------------------------
 Gunakan matplotlib.animation untuk animasi:
 
    a) Buat figure dengan 2 subplot:
@@ -837,21 +983,21 @@ Gunakan matplotlib.animation untuk animasi:
 
 
 STEP 3: Add Gradient Visualization
-──────────────────────────────────
+----------------------------------
 Tambahkan visualisasi gradient:
 
    a) Arrow dari current position menunjukkan arah gradient
-   b) Arrow length ∝ gradient magnitude
+   b) Arrow length proportional to gradient magnitude
    c) Color-coded: red = large gradient, blue = small gradient
    
-   💡 KENAPA visualisasi gradient?
+   TIPS: KENAPA visualisasi gradient?
      - Memahami kenapa optimizer "zig-zag"
      - Melihat arah steepest descent
      - Memahami efek momentum (gradient vs velocity)
 
 
 STEP 4: Add Comparison Mode
-───────────────────────────
+---------------------------
 Tampilkan 2-4 optimizer secara bersamaan:
 
    a) Same figure, different colors untuk trajectory
@@ -860,7 +1006,7 @@ Tampilkan 2-4 optimizer secara bersamaan:
 
 
 STEP 5: Export dan Dokumentasi
-──────────────────────────────
+------------------------------
    a) Simpan animasi sebagai file
    b) Buat README dengan:
       - Cara menjalankan
@@ -869,19 +1015,19 @@ STEP 5: Export dan Dokumentasi
       - Tips untuk tuning hyperparameters
 
 
-💡 HINTS:
+TIPS HINTS:
    - from matplotlib.animation import FuncAnimation
    - ani.save('optimizer_demo.gif', writer='pillow', fps=10)
    - Gunakan plt.pause(0.01) untuk real-time update tanpa animasi
    - Clear axis dengan ax.clear() sebelum redraw
 
-⚠️ COMMON MISTAKES:
-   - Tidak mengatur axis limits → plot "jump"
-   - Frame rate terlalu tinggi → animasi terlalu cepat
-   - Lupa normalize arrow length → arrow terlalu besar/kecil
-   - Tidak handle optimizer yang diverge → NaN di animasi
+PERINGATAN COMMON MISTAKES:
+   - Tidak mengatur axis limits -> plot "jump"
+   - Frame rate terlalu tinggi -> animasi terlalu cepat
+   - Lupa normalize arrow length -> arrow terlalu besar/kecil
+   - Tidak handle optimizer yang diverge -> NaN di animasi
 
-🎯 EXPECTED OUTPUT:
+TARGET EXPECTED OUTPUT:
    - Animasi .gif yang menunjukkan perbedaan optimizer
    - File Python yang bisa di-run dengan berbagai konfigurasi
    - README dengan penjelasan mendalam
@@ -892,5 +1038,5 @@ dan kenapa Adam biasanya bekerja paling baik.
 """
 
 print("\n" + "="*50)
-print("✅ Modul selesai! Lanjut ke: 02-ml-dari-nol/04_evaluasi_model.py")
+print("OK Modul selesai! Lanjut ke: 02-ml-dari-nol/04_evaluasi_model.py")
 print("="*50)

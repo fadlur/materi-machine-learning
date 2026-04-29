@@ -1,11 +1,11 @@
 """
 =============================================================
-FASE 2 — MODUL 4: EVALUASI MODEL — THE COMPLETE GUIDE
+FASE 2 - MODUL 4: EVALUASI MODEL - THE COMPLETE GUIDE
 =============================================================
 "A model is only as good as its evaluation."
 
 Ini modul yang sering di-skip di tutorial, padahal:
-- Evaluasi yang salah → keputusan yang salah → deployment gagal
+- Evaluasi yang salah -> keputusan yang salah -> deployment gagal
 - Data scientist yang jago evaluasi > yang jago bikin model
 
 Setelah modul ini, kamu akan bisa:
@@ -25,8 +25,51 @@ np.random.seed(42)
 
 
 # ===========================================================
-# 📖 BAGIAN 1: Regression Metrics Lengkap
+# BAGIAN 1: Regression Metrics Lengkap
 # ===========================================================
+# Regression metrics mengukur seberapa dekat prediksi dengan nilai sebenarnya.
+# Setiap metrik memiliki karakteristik dan use case yang berbeda.
+#
+# DETAIL MATEMATIKA:
+# Residual = y_true - y_pred (error untuk satu sample)
+#
+# MSE (Mean Squared Error):
+#   MSE = (1/n) * Sum(residual_i^2)
+#   - Penalti kuadratik untuk error besar -> sangat sensitif terhadap outlier
+#   - Satuan: squared unit dari target (sulit diinterpretasi)
+#   - Differentiable -> mudah dioptimasi
+#
+# RMSE (Root Mean Squared Error):
+#   RMSE = sqrt(MSE)
+#   - Satuan sama dengan target -> lebih mudah diinterpretasi
+#   - Masih sensitif terhadap outlier
+#
+# MAE (Mean Absolute Error):
+#   MAE = (1/n) * Sum(|residual_i|)
+#   - Penalti linear untuk error -> robust terhadap outlier
+#   - Tidak differentiable di 0 -> sedikit lebih sulit dioptimasi
+#
+# MAPE (Mean Absolute Percentage Error):
+#   MAPE = (1/n) * Sum(|residual_i / y_true_i|) * 100%
+#   - Error dalam persen -> relatif terhadap magnitude target
+#   - Problem: undefined jika y_true = 0
+#   - Bias ke bawah jika ada outlier besar
+#
+# R^2 (Coefficient of Determination):
+#   R^2 = 1 - SS_res / SS_tot
+#   - Proporsi variance yang dijelaskan oleh model
+#   - 1.0 = sempurna, 0.0 = tidak lebih baik dari mean, negatif = lebih buruk
+#
+# Adjusted R^2:
+#   Adj R^2 = 1 - (1-R^2) * (n-1) / (n-p-1)
+#   - Koreksi untuk jumlah fitur (p)
+#   - Menghindari overestimasi dengan menambah fitur tidak relevan
+#
+# Koneksi Teknik Elektro:
+# - MSE = mean squared error di signal processing
+# - RMSE = RMS (Root Mean Square) value
+# - R^2 = SNR-like measure (signal explained / total signal)
+# - Residual analysis = noise analysis
 
 def regression_metrics(y_true, y_pred):
     """
@@ -50,23 +93,30 @@ def regression_metrics(y_true, y_pred):
     Metrik yang dihitung:
     - MSE (Mean Squared Error): rata-rata squared errors.
       Penalti besar untuk error besar (outliers).
+      Kelemahan: satuan tidak sama dengan target.
     - RMSE (Root MSE): akar MSE. Satuan sama dengan target.
+      Lebih intuitif dari MSE.
     - MAE (Mean Absolute Error): rata-rata absolute errors.
       Robust terhadap outliers.
+      Kelemahan: tidak differentiable di 0.
     - MAPE (Mean Absolute Percentage Error): error dalam persen.
-    - R²: proporsi variance yang di-explain oleh model.
-    - Adjusted R²: R² yang dikoreksi untuk jumlah fitur.
+      Problem: bisa undefined jika y_true mendekati 0.
+    - R^2: proporsi variance yang di-explain oleh model.
+      Kelemahan: selalu meningkat dengan menambah fitur.
+    - Adjusted R^2: R^2 yang dikoreksi untuk jumlah fitur.
+      Lebih reliable untuk model comparison.
     
     Koneksi Teknik Elektro:
     - MSE = mean squared error di signal processing
     - RMSE = RMS (Root Mean Square) value
-    - R² = SNR-like measure (signal explained / total signal)
+    - R^2 = SNR-like measure (signal explained / total signal)
     """
     residuals = y_true - y_pred
     
     mse = np.mean(residuals**2)
     rmse = np.sqrt(mse)
     mae = np.mean(np.abs(residuals))
+    # Tambahkan epsilon untuk menghindari division by zero
     mape = np.mean(np.abs(residuals / (y_true + 1e-8))) * 100
     
     ss_res = np.sum(residuals**2)
@@ -74,8 +124,9 @@ def regression_metrics(y_true, y_pred):
     r2 = 1 - ss_res / ss_tot
     
     n = len(y_true)
-    # Adjusted R² — penalti untuk fitur yang banyak
+    # Adjusted R^2 - penalti untuk fitur yang banyak
     # p = jumlah fitur (kita estimasi, default 1)
+    # Semakin banyak fitur -> Adjusted R^2 semakin kecil dari R^2
     adj_r2 = 1 - (1 - r2) * (n - 1) / (n - 2)
     
     print("=== Regression Metrics ===")
@@ -83,8 +134,8 @@ def regression_metrics(y_true, y_pred):
     print(f"RMSE: {rmse:.4f}  (dalam satuan yang sama dengan y)")
     print(f"MAE:  {mae:.4f}  (robust terhadap outlier)")
     print(f"MAPE: {mape:.2f}% (persentase error)")
-    print(f"R²:   {r2:.4f}  (proporsi variance yang di-explain)")
-    print(f"Adj R²: {adj_r2:.4f} (R² yang adjust untuk jumlah fitur)")
+    print(f"R^2:   {r2:.4f}  (proporsi variance yang di-explain)")
+    print(f"Adj R^2: {adj_r2:.4f} (R^2 yang adjust untuk jumlah fitur)")
     
     return {'mse': mse, 'rmse': rmse, 'mae': mae, 'r2': r2}
 
@@ -99,7 +150,13 @@ metrics_good = regression_metrics(y_true, y_pred_good)
 print("\nModel BURUK:")
 metrics_bad = regression_metrics(y_true, y_pred_bad)
 
-# Residual analysis — PENTING untuk diagnosa model
+# Residual analysis - PENTING untuk diagnosa model
+# Residual plot membantu mendeteksi:
+# 1. Non-linearity (pattern di residual plot)
+# 2. Heteroscedasticity (variance residual tidak konstan)
+# 3. Outliers (residual sangat besar)
+# 4. Non-normality (distribusi residual tidak normal)
+
 fig, axes = plt.subplots(2, 2, figsize=(12, 10))
 
 # Actual vs Predicted
@@ -135,12 +192,38 @@ axes[1, 1].set_title('QQ Plot (titik harus di garis)')
 plt.tight_layout()
 plt.savefig('01_regression_diagnostics.png', dpi=100, bbox_inches='tight')
 plt.close()
-print("\n📊 Saved: 01_regression_diagnostics.png")
+print("\nSaved: 01_regression_diagnostics.png")
 
 
 # ===========================================================
-# 📖 BAGIAN 2: Classification Metrics Lengkap
+# BAGIAN 2: Classification Metrics Lengkap
 # ===========================================================
+# Classification metrics mengukur performa model klasifikasi.
+# Confusion matrix adalah fondasi dari semua metrics klasifikasi.
+#
+# DETAIL MATEMATIKA:
+# Confusion Matrix untuk binary classification:
+#                 Prediksi
+#              0        1
+# Aktual  0    TN       FP
+#         1    FN       TP
+#
+# - TP: True Positive (prediksi positif, benar positif)
+# - FP: False Positive (prediksi positif, salah negatif) -> Type I error
+# - FN: False Negative (prediksi negatif, salah positif) -> Type II error
+# - TN: True Negative (prediksi negatif, benar negatif)
+#
+# Metrics:
+# - Accuracy = (TP+TN) / Total
+# - Precision = TP / (TP+FP) -> "dari yang diprediksi positif, berapa yang benar"
+# - Recall/Sensitivity = TP / (TP+FN) -> "dari yang memang positif, berapa yang tertangkap"
+# - Specificity = TN / (TN+FP) -> "dari yang negatif, berapa yang benar"
+# - F1 = 2 * P * R / (P+R) -> harmonic mean precision & recall
+#
+# Untuk multi-class:
+# - Macro average: rata-rata tanpa weighting
+# - Weighted average: rata-rata berdasarkan jumlah sample per kelas
+# - Micro average: aggregate TP, FP, FN terlebih dahulu, lalu hitung metric
 
 def classification_report(y_true, y_pred, y_proba=None, class_names=None):
     """
@@ -169,12 +252,20 @@ def classification_report(y_true, y_pred, y_proba=None, class_names=None):
     ------
     Metrics per class:
     - Precision = TP / (TP + FP)
+      "Dari yang saya prediksi sebagai kelas X, berapa yang benar?"
     - Recall = TP / (TP + FN)
+      "Dari yang memang kelas X, berapa yang saya tangkap?"
     - F1 = 2 * P * R / (P + R)
+      Balance antara precision dan recall
     - Support = jumlah samples per kelas
     
     Weighted average:
     - Rata-rata weighted by support (jumlah samples per kelas)
+    - Lebih representatif untuk imbalanced data
+    
+    PERINGATAN: Accuracy bisa menipu untuk imbalanced data!
+    Jika 95% data kelas 0, model yang selalu prediksi 0
+    mendapat accuracy 95% tapi tidak berguna.
     """
     classes = np.unique(y_true)
     n_classes = len(classes)
@@ -183,6 +274,7 @@ def classification_report(y_true, y_pred, y_proba=None, class_names=None):
         class_names = [f'Class {c}' for c in classes]
     
     # Confusion matrix
+    # cm[i][j] = jumlah sample kelas i yang diprediksi sebagai kelas j
     cm = np.zeros((n_classes, n_classes), dtype=int)
     for t, p in zip(y_true, y_pred):
         i = np.where(classes == t)[0][0]
@@ -248,12 +340,41 @@ cm = classification_report(y_true_mc, y_pred_mc,
 
 
 # ===========================================================
-# 📖 BAGIAN 3: Proper Cross-Validation
+# BAGIAN 3: Proper Cross-Validation
 # ===========================================================
+# Cross-validation (CV) adalah metode evaluasi yang robust.
+# Tujuannya: mendapatkan estimasi performa yang tidak bias
+# dan mengukur variance dari estimasi tersebut.
+#
+# DETAIL MATEMATIKA:
+# K-Fold CV:
+# - Bagi data ke k fold secara random
+# - Untuk setiap fold i: train pada k-1 fold lain, test pada fold i
+# - Score CV = rata-rata dari k scores
+# - Std CV = standar deviasi dari k scores (mengukur stabilitas)
+#
+# Stratified K-Fold:
+# - Setiap fold memiliki proporsi kelas yang sama dengan data asli
+# - Penting untuk imbalanced datasets
+# - Mengurangi variance estimasi untuk kelas minoritas
+#
+# Time Series Split:
+# - Training set selalu dari masa lalu, test dari masa depan
+# - Mencegah data leakage dari future ke past
+# - Sangat penting untuk data temporal!
+#
+# Leave-One-Out (LOO):
+# - k = n (setiap sample jadi test sekali)
+# - Bias rendah tapi variance tinggi
+# - Komputasi mahal: O(n) kali training
+#
+# Koneksi Teknik Elektro:
+# - K-Fold CV = averaging multiple measurements untuk mengurangi noise
+# - Mirip dengan Welch's method untuk power spectrum estimation
 
 class CrossValidator:
     """
-    Proper cross-validation — menghindari data leakage.
+    Proper cross-validation - menghindari data leakage.
     
     Methods:
     --------
@@ -291,6 +412,12 @@ class CrossValidator:
         --------
         list of np.ndarray
             List berisi k array of indices.
+            
+        Notes:
+        ------
+        - np.random.permutation(n) membuat array [0, 1, ..., n-1] yang diacak
+        - fold_sizes memastikan distribusi seimbang (modulo handling)
+        - Setiap fold memiliki size: floor(n/k) atau ceil(n/k)
         """
         np.random.seed(seed)
         indices = np.random.permutation(n)
@@ -306,7 +433,7 @@ class CrossValidator:
     @staticmethod
     def stratified_k_fold_indices(y, k=5, seed=42):
         """
-        Stratified k-fold — preserves class distribution.
+        Stratified k-fold - preserves class distribution.
         
         Parameters:
         -----------
@@ -327,6 +454,8 @@ class CrossValidator:
         - Setiap fold memiliki proporsi kelas yang sama dengan data asli
         - Penting untuk imbalanced datasets
         - Implementasi: split per class, lalu combine
+        - Kalau ada kelas dengan jumlah < k, beberapa fold mungkin
+          tidak memiliki kelas tersebut (edge case)
         """
         np.random.seed(seed)
         classes = np.unique(y)
@@ -347,7 +476,7 @@ class CrossValidator:
     @staticmethod
     def time_series_split(n, n_splits=5, min_train=None):
         """
-        Time Series Split — WAJIB untuk data temporal!
+        Time Series Split - WAJIB untuk data temporal!
         
         Parameters:
         -----------
@@ -372,7 +501,10 @@ class CrossValidator:
         
         Kenapa? Karena data masa depan TIDAK BOLEH dipakai
         untuk melatih model yang memprediksi masa depan.
-        Ini sumber data leakage paling umum!
+        Ini sumber data leakage paling umum di time series!
+        
+        PERINGATAN: Jika menggunakan feature engineering yang melibatkan
+        windowing (moving average, etc.), window juga harus dari masa lalu.
         """
         if min_train is None:
             min_train = n // (n_splits + 1)
@@ -397,20 +529,37 @@ for i, (train_idx, test_idx) in enumerate(splits):
 ax.set_yticks(range(len(splits)))
 ax.set_yticklabels([f'Split {i+1}' for i in range(len(splits))])
 ax.set_xlabel('Sample Index')
-ax.set_title('Time Series Cross-Validation (🟦 Train, 🟥 Test)')
+ax.set_title('Time Series Cross-Validation (Train=blue, Test=red)')
 ax.legend(['Train', 'Test'])
 plt.tight_layout()
 plt.savefig('02_time_series_cv.png', dpi=100, bbox_inches='tight')
 plt.close()
-print("\n📊 Saved: 02_time_series_cv.png")
+print("\nSaved: 02_time_series_cv.png")
 
 
 # ===========================================================
-# 📖 BAGIAN 4: Data Leakage — Kesalahan Paling Berbahaya
+# BAGIAN 4: Data Leakage - Kesalahan Paling Berbahaya
 # ===========================================================
+# Data leakage = informasi dari test set bocor ke training process.
+# Hasil: model terlihat BAGUS di evaluation, tapi GAGAL di production.
+#
+# DETAIL:
+# Leakage bisa terjadi di berbagai tahap:
+# 1. Preprocessing sebelum split (normalisasi, imputasi, encoding)
+# 2. Feature selection menggunakan seluruh data
+# 3. Hyperparameter tuning menggunakan test set
+# 4. Time series: menggunakan data future sebagai feature
+# 5. Duplicate data di train dan test
+#
+# Cara mencegah:
+# - Selalu split dulu, baru preprocessing
+# - Preprocessing fit pada train, transform pada test
+# - Gunakan validation set atau CV untuk hyperparameter tuning
+# - Untuk time series: strict temporal split
+# - Deduplicate sebelum split
 
 print("\n" + "="*50)
-print("⚠️  DATA LEAKAGE — The Silent Killer")
+print("PERINGATAN: DATA LEAKAGE - The Silent Killer")
 print("="*50)
 print("""
 Data leakage = informasi dari test set bocor ke training process.
@@ -418,25 +567,25 @@ Hasil: model terlihat BAGUS di evaluation, tapi GAGAL di production.
 
 CONTOH LEAKAGE UMUM:
 
-1. ❌ Normalize SEMUA data sebelum split
-   → Test data ikut menentukan mean/std
-   ✅ Normalize HANYA di training data, apply ke test
+1. [SALAH] Normalize SEMUA data sebelum split
+   -> Test data ikut menentukan mean/std
+   [BENAR] Normalize HANYA di training data, apply ke test
 
-2. ❌ Feature selection menggunakan SEMUA data
-   → Test data ikut menentukan fitur mana yang penting
-   ✅ Feature selection HANYA di training fold
+2. [SALAH] Feature selection menggunakan SEMUA data
+   -> Test data ikut menentukan fitur mana yang penting
+   [BENAR] Feature selection HANYA di training fold
 
-3. ❌ Random split pada time series data
-   → Model "melihat" masa depan
-   ✅ Pakai time series split (lihat di atas)
+3. [SALAH] Random split pada time series data
+   -> Model "melihat" masa depan
+   [BENAR] Pakai time series split (lihat di atas)
 
-4. ❌ Duplicate data yang tersebar di train dan test
-   → Model hapal, bukan belajar
-   ✅ Deduplicate sebelum split
+4. [SALAH] Duplicate data yang tersebar di train dan test
+   -> Model hapal, bukan belajar
+   [BENAR] Deduplicate sebelum split
 
-5. ❌ Target encoding di SEMUA data
-   → Test labels bocor ke features
-   ✅ Target encoding HANYA di training fold
+5. [SALAH] Target encoding di SEMUA data
+   -> Test labels bocor ke features
+   [BENAR] Target encoding HANYA di training fold
 
 Ingat: Leakage tidak akan tertangkap oleh cross-validation biasa
 jika preprocessing dilakukan SEBELUM split!
@@ -445,12 +594,12 @@ jika preprocessing dilakukan SEBELUM split!
 # Demo leakage
 n = 200
 X_demo = np.random.randn(n, 5)
-y_demo = np.random.randint(0, 2, n)  # RANDOM labels — tidak ada pattern!
+y_demo = np.random.randint(0, 2, n)  # RANDOM labels - tidak ada pattern!
 
-# ❌ WRONG: Normalize semua data dulu, baru split
+# [SALAH] WRONG: Normalize semua data dulu, baru split
 X_leaked = (X_demo - X_demo.mean(axis=0)) / X_demo.std(axis=0)
 
-# ✅ RIGHT: Split dulu, baru normalize
+# [BENAR] RIGHT: Split dulu, baru normalize
 train_idx = np.arange(int(0.8 * n))
 test_idx = np.arange(int(0.8 * n), n)
 
@@ -466,12 +615,27 @@ X_test_proper = (X_test - train_mean) / train_std  # pakai mean/std TRAINING!
 print("Demo: efek leakage pada normalisasi")
 print(f"  Leaked test mean:  {X_leaked[test_idx].mean(axis=0).round(3)}")
 print(f"  Proper test mean:  {X_test_proper.mean(axis=0).round(3)}")
-print("  → Leaked mean ≈ 0 (informasi bocor), Proper mean ≠ 0 (realistic)")
+print("  -> Leaked mean ~ 0 (informasi bocor), Proper mean != 0 (realistic)")
 
 
 # ===========================================================
-# 📖 BAGIAN 5: Hyperparameter Tuning
+# BAGIAN 5: Hyperparameter Tuning
 # ===========================================================
+# Hyperparameter tuning = mencari kombinasi parameter terbaik.
+# Grid Search = mencoba semua kombinasi yang mungkin.
+# Random Search = mencoba kombinasi random (sering lebih efisien).
+# Bayesian Optimization = menggunakan model untuk memprediksi
+#   kombinasi yang paling menjanjikan (lebih advanced).
+#
+# DETAIL MATEMATIKA:
+# Grid search: untuk setiap kombinasi parameter:
+#   1. Jalankan k-fold CV
+#   2. Hitung mean dan std score
+#   3. Pilih kombinasi dengan mean score tertinggi
+#
+# PERINGATAN: Hyperparameter tuning harus dilakukan secara proper
+# menggunakan validation set atau nested CV.
+# Menggunakan test set untuk tuning = data leakage!
 
 def grid_search_cv(X, y, param_grid, model_class, k=5):
     """
@@ -504,6 +668,8 @@ def grid_search_cv(X, y, param_grid, model_class, k=5):
       b) Hitung mean dan std score
     - Pilih parameter dengan mean score tertinggi
     - Proper normalization inside CV loop!
+    - PERINGATAN: Jangan gunakan test set untuk tuning!
+    - Untuk dataset kecil: gunakan nested CV untuk estimasi unbiased.
     """
     best_score = -np.inf
     best_params = None
@@ -522,6 +688,7 @@ def grid_search_cv(X, y, param_grid, model_class, k=5):
             y_train, y_test = y[train_idx], y[test_idx]
             
             # Proper normalization inside CV loop!
+            # Fit scaler pada training fold ONLY
             mean = X_train.mean(axis=0)
             std = X_train.std(axis=0) + 1e-8
             X_train = (X_train - mean) / std
@@ -540,25 +707,25 @@ def grid_search_cv(X, y, param_grid, model_class, k=5):
             best_score = mean_score
             best_params = params
         
-        print(f"  {params}: {mean_score:.4f} ± {std_score:.4f}")
+        print(f"  {params}: {mean_score:.4f} +/- {std_score:.4f}")
     
-    print(f"\n  Best: {best_params} → {best_score:.4f}")
+    print(f"\n  Best: {best_params} -> {best_score:.4f}")
     return best_params, results
 
 
 # ===========================================================
-# 🏋️ EXERCISE 7: Evaluasi Lengkap
+# LATIHAN 7: Evaluasi Lengkap
 # ===========================================================
 """
-🎯 Learning Objectives:
+TARGET Learning Objectives:
    - Membangun proper ML pipeline end-to-end
    - Menerapkan nested cross-validation
    - Mengimplementasikan bootstrap confidence interval
 
-📋 LANGKAH-LANGKAH:
+PANDUAN LANGKAH-LANGKAH:
 
 STEP 1: Implementasi Proper ML Pipeline
-───────────────────────────────────────
+---------------------------------------
 Buat function run_pipeline(X, y, model_class, model_params) yang:
 
    a) Load/generate data
@@ -569,7 +736,7 @@ Buat function run_pipeline(X, y, model_class, model_params) yang:
       
    d) Train model
    e) Evaluate dengan SEMUA metrik yang relevan:
-      - Regression: MSE, RMSE, MAE, R²
+      - Regression: MSE, RMSE, MAE, R^2
       - Classification: Accuracy, Precision, Recall, F1, AUC
       
    f) Visualisasi:
@@ -577,21 +744,22 @@ Buat function run_pipeline(X, y, model_class, model_params) yang:
       - Confusion matrix (classification)
       - Residual plot (regression)
 
-   💡 KENAPA pipeline penting?
+   TIPS: KENAPA pipeline penting?
      - Mencegah data leakage
      - Reproducible (dengan random seed)
      - Mudah di-extend untuk berbagai model
+     - Semua preprocessing terenkapsulasi
 
 
 STEP 2: Implementasi Nested Cross-Validation
-─────────────────────────────────────────────
+--------------------------------------------
 Nested CV = CV di dalam CV.
 
    Struktur:
    - Outer loop: 5-fold untuk estimasi performance
    - Inner loop: 3-fold untuk hyperparameter tuning
    
-   💡 Apa yang harus dilakukan:
+   TIPS: Apa yang harus dilakukan:
      a) Bagi data ke 5 fold (outer)
      b) Untuk setiap outer fold:
         - Outer test = fold i
@@ -604,25 +772,27 @@ Nested CV = CV di dalam CV.
         - Train final model pada outer train dengan best parameter
         - Evaluate pada outer test
         
-     c) Report: mean ± std dari 5 outer scores
+     c) Report: mean +/- std dari 5 outer scores
      
-   💡 KENAPA nested CV?
+   TIPS: KENAPA nested CV?
      - Single CV bisa overestimate performance
      - Karena hyperparameter dipilih berdasarkan CV score yang SAMA
      - Nested CV memberikan unbiased estimate
      - Gold standard untuk small datasets
+     - Biasanya menghasilkan score yang lebih rendah (realistic)
 
-   ⚠️ Hati-hati:
+   PERINGATAN: Hati-hati:
      - Jangan pakai outer test untuk tuning hyperparameter!
      - Inner CV HANYA pada outer train
-     - Computationally expensive
+     - Computationally expensive: k_outer * k_inner training per parameter
+     - Untuk n=1000, 5x3 CV = 15 training per parameter
 
 
 STEP 3: Implementasi Bootstrap Confidence Interval
-───────────────────────────────────────────────────
+--------------------------------------------------
 Bootstrap = resampling untuk estimasi uncertainty.
 
-   💡 Apa yang harus dilakukan:
+   TIPS: Apa yang harus dilakukan:
      a) Setelah model di-train, dapatkan test predictions
      b) Resample test set dengan replacement sebanyak 1000x
      c) Untuk setiap resample:
@@ -631,10 +801,11 @@ Bootstrap = resampling untuk estimasi uncertainty.
         - Sort
         - 95% CI = [percentile 2.5, percentile 97.5]
         
-   💡 KENAPA bootstrap?
+   TIPS: KENAPA bootstrap?
      - Memberikan confidence interval untuk metrics
      - Menunjukkan stabilitas model
      - Membantu decision: apakah improvement signifikan?
+     - Non-parametric: tidak asumsi distribusi normal
      
    Contoh output:
    ```
@@ -642,21 +813,25 @@ Bootstrap = resampling untuk estimasi uncertainty.
    95% CI: [0.82, 0.88]
    ```
    Artinya: kita 95% yakin true accuracy ada di [0.82, 0.88]
+   
+   PERINGATAN: Bootstrap menggunakan WITH replacement.
+   Tanpa replacement = permutation test (beda konsep).
 
 
-💡 HINTS:
+TIPS HINTS:
    - Untuk nested CV, gunakan 2 level loop
    - Untuk bootstrap, gunakan np.random.choice(n, size=n, replace=True)
    - Simpan semua scores untuk analisis variance
    - Gunakan box plot untuk visualisasi distribution
 
-⚠️ COMMON MISTAKES:
+PERINGATAN COMMON MISTAKES:
    - Data leakage di normalization step
    - Menggunakan test set untuk hyperparameter tuning
    - Bootstrap tanpa replacement
    - Confidence interval menggunakan standard error, bukan percentiles
+   - Nested CV: menggunakan outer test untuk tuning
 
-🎯 EXPECTED OUTPUT:
+TARGET EXPECTED OUTPUT:
    - Pipeline yang proper dan reusable
    - Nested CV score yang realistic (biasanya lebih rendah dari simple CV)
    - Bootstrap CI yang narrow untuk dataset besar, wide untuk dataset kecil
@@ -665,18 +840,18 @@ Bootstrap = resampling untuk estimasi uncertainty.
 
 
 # ===========================================================
-# 🔥 CHALLENGE: Benchmarking Framework
+# CHALLENGE: Benchmarking Framework
 # ===========================================================
 """
-🎯 Learning Objectives:
+TARGET Learning Objectives:
    - Membangun reusable benchmarking framework
    - Melakukan statistical comparison antar model
    - Membuat visualisasi comprehensive untuk model comparison
 
-📋 LANGKAH-LANGKAH:
+PANDUAN LANGKAH-LANGKAH:
 
 STEP 1: Design Benchmarking Framework
-──────────────────────────────────────
+-------------------------------------
 Buat class ModelBenchmark dengan interface:
 
    class ModelBenchmark:
@@ -700,7 +875,7 @@ Buat class ModelBenchmark dengan interface:
 
 
 STEP 2: Implementasi .run_cv()
-─────────────────────────────
+-----------------------------
    Untuk setiap model:
    a) Jalankan k-fold CV
    b) Simpan scores per fold
@@ -711,26 +886,31 @@ STEP 2: Implementasi .run_cv()
 
 
 STEP 3: Implementasi .statistical_test()
-────────────────────────────────────────
+----------------------------------------
    Paired t-test antar setiap pasangan model:
    
-   H0: μ_A - μ_B = 0 (tidak ada perbedaan signifikan)
-   H1: μ_A - μ_B ≠ 0 (ada perbedaan signifikan)
+   H0: mu_A - mu_B = 0 (tidak ada perbedaan signifikan)
+   H1: mu_A - mu_B != 0 (ada perbedaan signifikan)
    
    Gunakan scipy.stats.ttest_rel(scores_A, scores_B)
    
-   💡 KENAPA paired t-test?
+   TIPS: KENAPA paired t-test?
      - Scores dari fold yang sama = paired
      - Paired test lebih powerful dari independent test
      - Menunjukkan apakah improvement signifikan secara statistik
+     - Jika p < 0.05 -> reject H0 -> perbedaan signifikan
 
 
 STEP 4: Implementasi .plot_results()
-────────────────────────────────────
+------------------------------------
 Buat figure dengan 4 subplot:
 
    a) Box plot: performance distribution per model
+      - Menunjukkan median, quartiles, outliers
+      
    b) Bar plot: mean score dengan error bar (std)
+      - Quick comparison
+      
    c) Heatmap: p-values dari paired t-test
       - Rows dan columns = model names
       - Cell [i,j] = p-value(model_i vs model_j)
@@ -740,7 +920,7 @@ Buat figure dengan 4 subplot:
 
 
 STEP 5: Implementasi .generate_report()
-───────────────────────────────────────
+---------------------------------------
 Output text report:
 
    ```
@@ -750,9 +930,9 @@ Output text report:
    CV: 5-fold
    
    Ranking:
-   1. Model A: 0.92 ± 0.03
-   2. Model B: 0.89 ± 0.04
-   3. Model C: 0.85 ± 0.05
+   1. Model A: 0.92 +/- 0.03
+   2. Model B: 0.89 +/- 0.04
+   3. Model C: 0.85 +/- 0.05
    
    Statistical Significance (p < 0.05):
    - Model A significantly better than Model B (p = 0.02)
@@ -765,19 +945,20 @@ Output text report:
    ```
 
 
-💡 HINTS:
+TIPS HINTS:
    - Gunakan scipy.stats untuk statistical tests
    - Gunakan seaborn untuk heatmap
    - Simpan semua raw scores untuk post-hoc analysis
    - Box plot lebih informatif dari bar plot untuk distributions
 
-⚠️ COMMON MISTAKES:
+PERINGATAN COMMON MISTAKES:
    - Independent t-test instead of paired t-test
    - Tidak koreksi untuk multiple comparisons (Bonferroni)
    - Menginterpretasi p-value sebagai effect size
    - Tidak melihat variance (hanya mean)
+   - Tidak mempertimbangkan computational cost
 
-🎯 EXPECTED OUTPUT:
+TARGET EXPECTED OUTPUT:
    - Class ModelBenchmark yang reusable
    - Comprehensive visualisasi dalam satu figure
    - Statistical report dengan recommendation
@@ -788,14 +969,14 @@ Investasi waktu sekarang = efisiensi di masa depan.
 """
 
 print("\n" + "="*50)
-print("🎉 FASE 2 SELESAI!")
+print("OK FASE 2 SELESAI!")
 print("="*50)
 print("""
 Kamu sekarang bisa:
-✅ Bangun Linear Regression dari nol
-✅ Bangun Logistic Regression dari nol
-✅ Implementasi berbagai varian Gradient Descent
-✅ Evaluasi model dengan proper methodology
+OK Bangun Linear Regression dari nol
+OK Bangun Logistic Regression dari nol
+OK Implementasi berbagai varian Gradient Descent
+OK Evaluasi model dengan proper methodology
 
 Sebelum lanjut ke Fase 3, pastikan:
 1. Semua exercise selesai

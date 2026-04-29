@@ -1,564 +1,966 @@
 """
 =============================================================
-FASE 8 — MODUL 3: LLM ENGINEERING
+FASE 8 - MODUL 3: LLM ENGINEERING
 =============================================================
-LLM (Large Language Models) adalah skill #1 yang dicari di 2025-2026.
-Untuk AI Engineer roles, LLM engineering adalah REQUIREMENT, bukan opsional.
+LLM (Large Language Models) merevolusi AI landscape di 2023-2026.
+Sebagai ML Engineer, kamu perlu memahami:
+- How to use LLMs effectively
+- How to fine-tune untuk specific tasks
+- How to deploy LLMs efficiently
+- How to build LLM-powered applications
 
-Background backend + EE kamu sangat cocok untuk:
-- LLM deployment & serving infrastructure
-- RAG system architecture (database + API + caching)
-- LLM agents & tool integration
-- Cost optimization & monitoring
+Koneksi Teknik Elektro:
+- LLM = large-scale nonlinear system
+- Prompt engineering = input signal conditioning
+- Fine-tuning = system adaptation
+- RAG = adaptive filter dengan external memory
+- Quantization = reduced-precision signal processing
 
-Durasi target: 5-7 hari
-=============================================================
-"""
+Durasi target: 4-5 jam
+============================================================="""
 
 import numpy as np
 
-# ===========================================================
-# 📖 BAGIAN 1: LLM Landscape 2025-2026
-# ===========================================================
-
-print("""
-╔══════════════════════════════════════════════════════════╗
-║     LLM LANDSCAPE FOR ENGINEERS                          ║
-╠══════════════════════════════════════════════════════════╣
-║                                                          ║
-║  MODEL TIERS:                                            ║
-║  ┌─────────────────────────────────────────────┐         ║
-║  │ TIER 1: Frontier Models                     │         ║
-║  │ GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro   │         ║
-║  │ Use case: Complex reasoning, production apps │        ║
-║  │ Cost: $$$, Latency: medium                  │         ║
-║  ├─────────────────────────────────────────────┤         ║
-║  │ TIER 2: Capable Open Models                 │         ║
-║  │ Llama 3, Mistral, Qwen, DeepSeek           │         ║
-║  │ Use case: Self-hosted, fine-tuned, cost-sensitive │    ║
-║  │ Cost: $ (hosting), Latency: customizable    │         ║
-║  ├─────────────────────────────────────────────┤         ║
-║  │ TIER 3: Small & Fast                        │         ║
-║  │ Phi-3, Gemma, Llama 3.2 1B/3B               │         ║
-║  │ Use case: Edge deployment, simple tasks     │         ║
-║  │ Cost: $, Latency: very fast                 │         ║
-║  └─────────────────────────────────────────────┘         ║
-║                                                          ║
-║  KEY CONCEPTS FOR ENGINEERS:                             ║
-║  1. Context Window — max tokens LLM bisa proses          ║
-║  2. Tokenization — cara text dipecah jadi tokens         ║
-║  3. Temperature — randomness (0=predictable, 1=creative) ║
-║  4. System Prompt — instruksi global untuk LLM           ║
-║  5. Function Calling — LLM panggil external tools        ║
-║                                                          ║
-╚══════════════════════════════════════════════════════════╝
-""")
+np.random.seed(42)
 
 
 # ===========================================================
-# 📖 BAGIAN 2: Prompt Engineering
+# BAGIAN 1: LLM Landscape
 # ===========================================================
+print("="*60)
+print("BAGIAN 1: LLM LANDSCAPE")
+print("="*60)
 
-print("""
-╔══════════════════════════════════════════════════════════╗
-║     PROMPT ENGINEERING PATTERNS                          ║
-╠══════════════════════════════════════════════════════════╣
-║                                                          ║
-║  1. ZERO-SHOT                                            ║
-║     "Classify this text as positive or negative: [text]" ║
-║                                                          ║
-║  2. FEW-SHOT                                             ║
-║     "Here are examples:                                  ║
-║      Text: 'Great product!' → Positive                   ║
-║      Text: 'Terrible service' → Negative                 ║
-║      Text: '[text]' → "                                  ║
-║                                                          ║
-║  3. CHAIN-OF-THOUGHT                                     ║
-║     "Think step by step before answering."               ║
-║     → LLM generates reasoning, then answer               ║
-║                                                          ║
-║  4. STRUCTURED OUTPUT                                    ║
-║     "Respond in JSON format with keys: summary, sentiment║
-║      confidence_score"                                   ║
-║                                                          ║
-║  5. SYSTEM PROMPT PATTERN                                ║
-║     system = "You are an expert electrical engineer.     ║
-║     Provide concise, technically accurate answers."      ║
-║                                                          ║
-║  ENGINEERING TIPS:                                       ║
-║  - Be specific ("concise" vs "detailed")                 ║
-║  - Use delimiters (###, """, XML tags)                   ║
-║  - Specify output format explicitly                      ║
-║  - Include constraints ("max 100 words")                 ║
-║  - Version your prompts (track in git!)                  ║
-║                                                          ║
-╚══════════════════════════════════════════════════════════╝
-""")
+llm_landscape = """
+TARGET MODELS:
 
+Open Source (Self-Hosted):
+  - LLaMA 2/3 (Meta): 7B, 13B, 70B parameters
+  - Mistral: 7B, 8x7B (Mixture of Experts)
+  - Falcon: 7B, 40B, 180B
+  - Qwen: 7B, 14B, 72B (multilingual)
+  - Gemma (Google): 2B, 7B
 
-# ===========================================================
-# 📖 BAGIAN 3: RAG (Retrieval-Augmented Generation)
-# ===========================================================
+API-Based (Cloud):
+  - GPT-4/4o (OpenAI): SOTA capabilities
+  - Claude 3 (Anthropic): strong reasoning
+  - Gemini (Google): multimodal
 
-print("""
-╔══════════════════════════════════════════════════════════╗
-║     RAG SYSTEM ARCHITECTURE                              ║
-╠══════════════════════════════════════════════════════════╣
-║                                                          ║
-║  Kenapa RAG?                                             ║
-║  - LLM tidak punya knowledge spesifik domain             ║
-║  - LLM bisa hallucinate (buat fakta palsu)               ║
-║  - RAG = kasih context yang relevan sebelum generate     ║
-║                                                          ║
-║  ┌─────────────────────────────────────────────┐         ║
-║  │           INGESTION PIPELINE                │         ║
-║  │                                             │         ║
-║  │  Documents ──▶ Chunking ──▶ Embedding     │         ║
-║  │     │           │            │              │         ║
-║  │     ▼           ▼            ▼              │         ║
-║  │  PDF,TXT    500-1000    Vector (768-dim)  │         ║
-║  │  Markdown   tokens      OpenAI/Sentence   │         ║
-║  │  API docs               Transformers      │         ║
-║  │                              │              │         ║
-║  │                              ▼              │         ║
-║  │                      ┌─────────────┐       │         ║
-║  │                      │  Vector DB  │       │         ║
-║  │                      │  ChromaDB   │       │         ║
-║  │                      │  Pinecone   │       │         ║
-║  │                      │  Weaviate   │       │         ║
-║  │                      └─────────────┘       │         ║
-║  └─────────────────────────────────────────────┘         ║
-║                     │                                    ║
-║  ┌──────────────────┼──────────────────────────┐         ║
-║  │           QUERY PIPELINE                     │         ║
-║  │                                              │         ║
-║  │  User Query ──▶ Embedding ──▶ Similarity    │         ║
-║  │     │              │           Search        │         ║
-║  │     │              │               │         │         ║
-║  │     │              │               ▼         │         ║
-║  │     │              │        Top-k Chunks     │         ║
-║  │     │              │               │         │         ║
-║  │     └──────────────┼───────────────┘         │         ║
-║  │                    ▼                          │         ║
-║  │         ┌─────────────────┐                  │         ║
-║  │         │  Augmented      │                  │         ║
-║  │         │  Prompt         │                  │         ║
-║  │         │                 │                  │         ║
-║  │         │ Context: [chunks]│                 │         ║
-║  │         │ Question: [query]│                 │         ║
-║  │         │ Answer:          │                 │         ║
-║  │         └────────┬────────┘                  │         ║
-║  │                  │                           │         ║
-║  │                  ▼                           │         ║
-║  │              LLM Generate                    │         ║
-║  │                  │                           │         ║
-║  │                  ▼                           │         ║
-║  │         Response + Source Citation           │         ║
-║  └──────────────────────────────────────────────┘         ║
-║                                                          ║
-║  ADVANCED RAG TECHNIQUES:                                ║
-║  - Re-ranking: cross-encoder untuk ranking ulang hasil   ║
-║  - Hybrid search: vector + keyword (BM25)                ║
-║  - Query expansion: generate synonym queries             ║
-║  - Multi-modal RAG: images + text                        ║
-║                                                          ║
-╚══════════════════════════════════════════════════════════╝
-""")
+Specialized:
+  - Code: CodeLlama, StarCoder, DeepSeek-Coder
+  - Medical: Med-PaLM
+  - Vision: LLaVA, GPT-4V
+
+DETAIL:
+- Open source models bisa di-self-host, lebih murah untuk high volume,
+  tapi butuh infrastructure dan expertise.
+- API-based models instant access, no maintenance, tapi ada cost per token.
+- Specialized models lebih baik untuk domain tertentu.
+
+TARGET KEY CONCEPTS:
+
+Parameters:
+  - 1B = 1 billion parameters
+  - GPT-3: 175B parameters
+  - GPT-4: estimated 1T+ parameters
+  - Storage: 1B params ~ 2-4 GB (FP16)
+  
+  DETAIL:
+  - Parameters = weights dalam neural network.
+  - Semakin banyak parameters, semakin powerful model (generally).
+  - Tapi juga semakin banyak memory dan compute yang dibutuhkan.
+
+Context Window:
+  - Max tokens yang bisa di-process
+  - GPT-4: 128K tokens
+  - Claude 3: 200K tokens
+  - Llama 2: 4K tokens (base)
+  
+  DETAIL:
+  - Context window = "working memory" dari LLM.
+  - Longer context = bisa process dokumen lebih panjang.
+  - Tapi longer context juga lebih expensive dan slower.
+
+Tokens:
+  - Unit of text (~ 0.75 words)
+  - Pricing based on tokens
+  - Input + output tokens dihitung
+  
+  DETAIL:
+  - Tokenization: text di-split ke subword units.
+  - English: ~100 tokens = ~75 words.
+  - Pricing API-based models: per 1K tokens.
+
+TARGET CAPABILITIES:
+
+Text Generation:
+  - Completion, summarization, translation
+  - Question answering
+  - Creative writing
+
+Code:
+  - Code generation, explanation, debugging
+  - Refactoring, documentation
+  - Test generation
+
+Reasoning:
+  - Chain-of-thought
+  - Mathematical reasoning
+  - Logical inference
+
+Multimodal (GPT-4V, Gemini):
+  - Image understanding
+  - Video analysis
+  - Audio processing
+"""
+print(llm_landscape)
 
 
 # ===========================================================
-# 💻 CONTOH: Simple RAG Implementation
+# BAGIAN 2: Prompt Engineering Patterns
 # ===========================================================
+print("\n" + "="*60)
+print("BAGIAN 2: PROMPT ENGINEERING PATTERNS")
+print("="*60)
+
+prompt_patterns = """
+TARGET ZERO-SHOT PROMPTING:
+No examples, just instructions.
+
+Example:
+"Classify the sentiment of this review as positive, negative, or neutral:
+Review: 'This product exceeded my expectations!'
+Sentiment:"
+
+DETAIL:
+- Zero-shot = model menjawab tanpa melihat contoh.
+- Works well untuk tasks yang sederhana dan umum.
+- Tapi less reliable untuk tasks yang kompleks atau niche.
+
+TARGET FEW-SHOT PROMPTING:
+Provide examples untuk guide the model.
+
+Example:
+"Classify the sentiment:
+
+Review: 'Amazing quality, highly recommend!'
+Sentiment: Positive
+
+Review: 'Terrible, waste of money'
+Sentiment: Negative
+
+Review: 'It works as expected'
+Sentiment: Neutral
+
+Review: 'Best purchase ever!'
+Sentiment:"
+
+DETAIL:
+- Few-shot = model melihat beberapa contoh sebelum menjawab.
+- Contoh membantu model understand format dan kriteria.
+- 3-5 examples biasanya cukup.
+- Examples harus diverse dan representative.
+
+TARGET CHAIN-OF-THOUGHT (CoT):
+Ask model untuk think step-by-step.
+
+Example:
+"Solve this math problem step by step:
+If a train travels 60 km/h and needs to cover 240 km,
+how long will it take?
+
+Step 1: Identify known variables
+Step 2: Identify the formula
+Step 3: Calculate the answer"
+
+DETAIL:
+- CoT memaksa model untuk show reasoning process.
+- Lebih accurate untuk tasks yang memerlukan reasoning.
+- Bisa dikombinasikan dengan few-shot untuk lebih baik.
+- Variants: Tree of Thoughts, Self-Consistency CoT.
+
+TARGET ROLE PROMPTING:
+Assign a role ke model.
+
+Example:
+"You are an expert electrical engineer with 20 years experience.
+Explain how a three-phase induction motor works, focusing on:
+1. The rotating magnetic field
+2. Slip and its significance
+3. Common failure modes"
+
+DETAIL:
+- Role prompting mempengaruhi tone dan depth dari response.
+- Model akan "act" sesuai role yang diberikan.
+- Berguna untuk domain-specific questions.
+
+TARGET STRUCTURED OUTPUT:
+Request specific output format.
+
+Example:
+"Analyze this power quality report and provide output in JSON:
+{
+  'voltage_sag_detected': boolean,
+  'severity': 'low' | 'medium' | 'high',
+  'recommended_action': string,
+  'confidence': number (0-1)
+}"
+
+DETAIL:
+- Structured output memudahkan parsing dan integration.
+- JSON, XML, YAML adalah format yang umum.
+- Sertakan schema dan type hints di prompt.
+- Verify output structure setelah generation.
+
+TARGET RETRIEVAL-AUGMENTED GENERATION (RAG):
+Combine LLM dengan external knowledge.
+
+Architecture:
+  User Query -> Retrieve Documents -> Combine dengan Query -> LLM -> Answer
+
+Components:
+  - Vector database: store document embeddings
+  - Retriever: find relevant documents
+  - Generator: LLM yang generate answer dengan context
+  
+DETAIL:
+- RAG mengatasi limitation LLM: knowledge cutoff dan hallucination.
+- Documents di-chunk dan di-embed ke vector space.
+- Retrieval menggunakan similarity search (cosine similarity).
+- Re-ranking bisa meningkatkan relevance.
+
+TARGET PROMPT CHAINING:
+Break complex tasks into multiple prompts.
+
+Example:
+  Prompt 1: "Extract key metrics dari report ini"
+  Prompt 2: "Analyze trends dari metrics: [output dari prompt 1]"
+  Prompt 3: "Generate recommendations berdasarkan analysis: [output dari prompt 2]"
+  
+DETAIL:
+- Prompt chaining = pipeline of LLM calls.
+- Setiap step bisa di-verify sebelum lanjut.
+- Lebih reliable untuk complex tasks.
+- Bisa di-parallelize untuk independent steps.
+
+Koneksi Teknik Elektro:
+- Prompt = input signal dengan specific characteristics
+- Few-shot = providing reference signals
+- CoT = sequential processing (seperti filter cascade)
+- RAG = system dengan external memory/storage
+- Prompt chaining = multi-stage signal processing
+"""
+print(prompt_patterns)
+
+
+# ===========================================================
+# BAGIAN 3: RAG Implementation
+# ===========================================================
+print("\n" + "="*60)
+print("BAGIAN 3: RAG IMPLEMENTATION")
+print("="*60)
 
 class SimpleRAG:
     """
-    RAG system sederhana untuk memahami konsep.
+    Simplified Retrieval-Augmented Generation system.
     
-    Di production, gunakan:
-    - LangChain / LlamaIndex untuk orchestration
-    - ChromaDB / Pinecone untuk vector store
-    - OpenAI / Sentence-Transformers untuk embeddings
+    Parameters:
+    -----------
+    documents : list
+        List of documents (strings).
+    embedding_model : callable
+        Function untuk compute embeddings.
+    llm : callable
+        Function untuk generate text.
+        
+    Notes:
+    ------
+    - RAG = combine retrieval dengan generation
+    - Retrieval: find relevant documents dari knowledge base
+    - Generation: generate answer menggunakan retrieved context
+    - Benefit: accurate, up-to-date, verifiable
+    - Ini adalah educational implementation. Production RAG
+      menggunakan vector databases dan production LLM APIs.
+    
+    Koneksi Teknik Elektro:
+    - Retrieval = matched filter (find similar signals)
+    - Generation = signal synthesis (generate response)
+    - Vector DB = filter bank (store reference signals)
     """
     
-    def __init__(self):
-        self.documents = []      # Raw documents
-        self.chunks = []         # Document chunks
-        self.embeddings = []     # Vector embeddings
-        self.chunk_sources = []  # Source mapping
+    def __init__(self, documents, embedding_model=None, llm=None):
+        self.documents = documents
+        self.embeddings = None
+        self.embedding_model = embedding_model or self._simple_embedding
+        self.llm = llm or self._simple_llm
+        
+        # Pre-compute embeddings
+        self._index_documents()
     
-    def chunk_document(self, text, chunk_size=500, overlap=50):
-        """
-        Split document into overlapping chunks.
-        
-        Strategy: Sliding window dengan overlap.
-        Ini penting supaya context tidak terputus di tengah.
-        """
-        words = text.split()
-        chunks = []
-        
-        start = 0
-        while start < len(words):
-            end = min(start + chunk_size, len(words))
-            chunk = ' '.join(words[start:end])
-            chunks.append(chunk)
-            start += chunk_size - overlap
-        
-        return chunks
+    def _simple_embedding(self, text):
+        """Simple bag-of-words embedding (untuk demo)."""
+        words = text.lower().split()
+        # Create simple vector (hash-based)
+        vec = np.zeros(100)
+        for word in words:
+            idx = hash(word) % 100
+            vec[idx] += 1
+        # Normalize
+        norm = np.linalg.norm(vec)
+        return vec / norm if norm > 0 else vec
     
-    def simple_embedding(self, text):
-        """
-        Mock embedding function.
-        
-        Di production, gunakan:
-        - openai.Embedding.create()
-        - sentence_transformers.SentenceTransformer.encode()
-        """
-        # Simple hash-based embedding untuk demo
-        np.random.seed(hash(text) % 2**32)
-        return np.random.randn(128)
+    def _simple_llm(self, prompt):
+        """Placeholder LLM (dalam praktik: OpenAI, local model, etc.)."""
+        return f"[Generated response based on context]\nPrompt: {prompt[:100]}..."
     
-    def cosine_similarity(self, a, b):
-        """Compute cosine similarity antara dua vectors."""
-        return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-10)
-    
-    def add_documents(self, documents):
-        """
-        Add documents ke RAG system.
-        
-        Documents: list of dict {'id': str, 'content': str, 'metadata': dict}
-        """
-        for doc in documents:
-            self.documents.append(doc)
-            doc_chunks = self.chunk_document(doc['content'])
-            
-            for chunk in doc_chunks:
-                self.chunks.append(chunk)
-                self.embeddings.append(self.simple_embedding(chunk))
-                self.chunk_sources.append({
-                    'doc_id': doc['id'],
-                    'metadata': doc.get('metadata', {})
-                })
-        
-        print(f"📚 Added {len(documents)} documents, {len(self.chunks)} chunks")
+    def _index_documents(self):
+        """Compute dan store document embeddings."""
+        self.embeddings = np.array([
+            self.embedding_model(doc) for doc in self.documents
+        ])
     
     def retrieve(self, query, top_k=3):
         """
-        Retrieve top-k relevant chunks untuk query.
+        Retrieve top-k relevant documents.
         
+        Parameters:
+        -----------
+        query : str
+            Query string.
+        top_k : int, default 3
+            Jumlah documents untuk retrieve.
+            
         Returns:
         --------
-        list of dict: {'chunk': str, 'score': float, 'source': dict}
+        list
+            Top-k relevant documents.
+            
+        Notes:
+        ------
+        - Menggunakan cosine similarity untuk ranking.
+        - Alternatif: Euclidean distance, dot product.
+        - Re-ranking dengan cross-encoder bisa meningkatkan quality.
         """
-        query_embedding = self.simple_embedding(query)
+        query_embedding = self.embedding_model(query)
         
-        similarities = []
-        for i, emb in enumerate(self.embeddings):
-            sim = self.cosine_similarity(query_embedding, emb)
-            similarities.append((i, sim))
+        # Cosine similarity
+        similarities = np.dot(self.embeddings, query_embedding)
+        top_indices = np.argsort(similarities)[::-1][:top_k]
         
-        # Sort by similarity descending
-        similarities.sort(key=lambda x: x[1], reverse=True)
-        
-        results = []
-        for idx, score in similarities[:top_k]:
-            results.append({
-                'chunk': self.chunks[idx],
-                'score': score,
-                'source': self.chunk_sources[idx]
-            })
-        
-        return results
+        return [self.documents[i] for i in top_indices]
     
-    def generate_prompt(self, query, retrieved_chunks):
-        """Generate augmented prompt dengan context."""
-        context = "\n\n".join([
-            f"[Document {i+1}] {r['chunk'][:200]}..."
-            for i, r in enumerate(retrieved_chunks)
-        ])
+    def generate(self, query, top_k=3):
+        """
+        Generate answer menggunakan RAG.
         
-        prompt = f"""Based on the following documents, answer the question.
-If the answer is not in the documents, say "I don't have enough information."
+        Parameters:
+        -----------
+        query : str
+            User query.
+        top_k : int, default 3
+            Jumlah context documents.
+            
+        Returns:
+        --------
+        str
+            Generated answer.
+            
+        Notes:
+        ------
+        - Context di-limit untuk fit dalam context window.
+        - Prompt engineering untuk instruct model menggunakan context.
+        - Cite sources untuk verifiability.
+        """
+        # Retrieve relevant documents
+        retrieved_docs = self.retrieve(query, top_k)
+        
+        # Build prompt dengan context
+        context = "\n\n".join(retrieved_docs)
+        prompt = f"""Based on the following context, answer the question:
 
-Documents:
+Context:
 {context}
 
 Question: {query}
 
 Answer:"""
         
-        return prompt
+        # Generate response
+        return self.llm(prompt)
 
 
-# ===========================================================
-# 💻 DEMO: RAG System
-# ===========================================================
-
-print("\n" + "="*50)
-print("DEMO: Simple RAG System")
-print("="*50)
-
-# Buat RAG system
-rag = SimpleRAG()
-
-# Tambahkan documents (simulasi manual EE)
-docs = [
-    {
-        'id': 'power_quality_101',
-        'content': """
-        Power quality refers to the stability and purity of electrical power.
-        Common power quality issues include voltage sags, swells, harmonics,
-        and flicker. Voltage sags are short-duration reductions in voltage,
-        typically caused by large loads starting or faults on the system.
-        Harmonics are sinusoidal voltages or currents having frequencies
-        that are integer multiples of the fundamental frequency.
-        """,
-        'metadata': {'category': 'power_quality', 'source': 'textbook'}
-    },
-    {
-        'id': 'transformer_maintenance',
-        'content': """
-        Transformer maintenance includes regular oil analysis, thermal imaging,
-        and dissolved gas analysis (DGA). DGA is one of the most important
-        diagnostic tools for oil-filled transformers. Key gases to monitor
-        include hydrogen, methane, ethane, ethylene, and acetylene.
-        Increased levels of these gases indicate different types of faults:
-        thermal faults, partial discharge, or arcing.
-        """,
-        'metadata': {'category': 'maintenance', 'source': 'manual'}
-    },
-    {
-        'id': 'smart_grid_ml',
-        'content': """
-        Machine learning applications in smart grids include load forecasting,
-        anomaly detection, and demand response optimization. Deep learning
-        models such as LSTM and Transformer have shown superior performance
-        for time series forecasting in power systems. Convolutional neural
-        networks can be applied to power quality disturbance classification
-        using time-frequency representations like spectrograms.
-        """,
-        'metadata': {'category': 'smart_grid', 'source': 'paper'}
-    }
+# Demo
+print("\n=== RAG Demo ===")
+documents = [
+    "Three-phase induction motors are the most common type of AC motor.",
+    "The rotating magnetic field in a three-phase motor is created by three windings.",
+    "Slip is the difference between synchronous speed and rotor speed.",
+    "Common failure modes include bearing failure and insulation breakdown.",
+    "Power factor in induction motors is typically lagging due to reactive power.",
 ]
 
-rag.add_documents(docs)
+rag = SimpleRAG(documents)
+query = "What causes induction motors to fail?"
+retrieved = rag.retrieve(query, top_k=2)
 
-# Query
-query = "What diagnostic tool is used for transformer faults?"
-results = rag.retrieve(query, top_k=2)
-
-print(f"\n🔍 Query: {query}")
-print("\n📄 Retrieved Chunks:")
-for i, r in enumerate(results):
-    print(f"\n[{i+1}] Score: {r['score']:.4f}")
-    print(f"    Source: {r['source']['doc_id']}")
-    print(f"    Chunk: {r['chunk'][:150]}...")
-
-# Generate augmented prompt
-prompt = rag.generate_prompt(query, results)
-print(f"\n📝 Augmented Prompt:\n{prompt[:500]}...")
+print(f"\nQuery: {query}")
+print(f"\nRetrieved documents:")
+for i, doc in enumerate(retrieved):
+    print(f"  {i+1}. {doc}")
 
 
 # ===========================================================
-# 📖 BAGIAN 4: LLM Fine-tuning dengan LoRA
+# BAGIAN 4: Fine-tuning dan PEFT
 # ===========================================================
+print("\n" + "="*60)
+print("BAGIAN 4: FINE-TUNING DAN PEFT")
+print("="*60)
 
-print("""
-╔══════════════════════════════════════════════════════════╗
-║     LLM FINE-TUNING: LORA & QLORA                        ║
-╠══════════════════════════════════════════════════════════╣
-║                                                          ║
-║  KENAPA FINE-TUNE?                                       ║
-║  - Domain-specific knowledge (engineering, legal, med)   ║
-║  - Specific task (classification, NER, summarization)    ║
-║  - Style/tone adaptation                                 ║
-║                                                          ║
-║  MASALAH FULL FINE-TUNING:                               ║
-║  - GPT-3 punya 175B parameters → butuh 100+ GPU!        ║
-║  - Cost: $$$$                                            ║
-║  - Storage: model besar untuk setiap fine-tuned version  ║
-║                                                          ║
-║  SOLUSI: LORA (Low-Rank Adaptation)                      ║
-║  ┌─────────────────────────────────────────────┐         ║
-║  │  Instead of updating ALL weights:           │         ║
-║  │  W_new = W_original + ΔW                   │         ║
-║  │                                             │         ║
-║  │  LoRA approximates: ΔW ≈ A × B            │         ║
-║  │  where A (d × r), B (r × k), r << d,k     │         ║
-║  │                                             │         ║
-║  │  Result: Only train A and B!               │         ║
-║  │  Parameters: 0.1% - 1% dari original       │         ║
-║  │  Memory: bisa di consumer GPU (24GB)       │         ║
-║  └─────────────────────────────────────────────┘         ║
-║                                                          ║
-║  QLORA (Quantized LoRA):                                 ║
-║  - Base model di-quantize ke 4-bit                       ║
-║  - LoRA adapter tetap 16-bit                             ║
-║  - Bisa fine-tune 70B model di single 24GB GPU!         ║
-║                                                          ║
-╚══════════════════════════════════════════════════════════╝
-""")
+finetuning_guide = """
+TARGET FINE-TUNING STRATEGIES:
 
+1. FULL FINE-TUNING
+   - Update all parameters
+   - Requires: GPU memory = 2-4x model size
+   - Best untuk: large datasets, significant domain shift
+   - Contoh: Llama-2-7B full fine-tune ~ 28-56 GB GPU
+   
+   DETAIL:
+   - Full fine-tuning memberikan flexibility maksimal.
+   - Tapi sangat expensive untuk large models.
+   - Bisa menyebabkan catastrophic forgetting jika tidak hati-hati.
 
-# ===========================================================
-# 📖 BAGIAN 5: LLM Deployment
-# ===========================================================
+2. PARAMETER-EFFICIENT FINE-TUNING (PEFT):
+   a) LoRA (Low-Rank Adaptation):
+      - Add low-rank matrices ke attention weights
+      - Update hanya matrices baru (2-4% dari total params)
+      - Formula: W = W0 + BA, dimana B dan A adalah low-rank
+      - Rank: typically 8, 16, 32, 64
+      - Memory: ~MBs instead of GBs
+      
+      DETAIL:
+      - LoRA membuat fine-tuning LLM accessible untuk consumer GPUs.
+      - W0 (pre-trained weights) di-freeze.
+      - Hanya A dan B yang di-train.
+      - At inference, bisa merge adapters dengan base model.
+      
+   b) QLoRA (Quantized LoRA):
+      - Quantize base model ke 4-bit
+      - Add LoRA adapters
+      - Memory: Llama-2-7B ~ 6 GB GPU
+      - Very popular untuk consumer GPUs
+      
+      DETAIL:
+      - Quantization mengurangi precision weights ke 4-bit.
+      - NormalFloat (NF4) quantization lebih baik dari INT4.
+      - Double quantization untuk quantize quantization constants.
+      - Paged optimizers untuk handle memory spikes.
+      
+   c) Prefix Tuning:
+      - Add trainable prefix tokens
+      - Freeze base model
+      - Only train prefix embeddings
+      
+   d) Prompt Tuning:
+      - Similar ke prefix tuning
+      - Add soft prompts (learnable embeddings)
 
-print("""
-╔══════════════════════════════════════════════════════════╗
-║     LLM DEPLOYMENT PATTERNS                              ║
-╠══════════════════════════════════════════════════════════╣
-║                                                          ║
-║  PATTERN 1: API WRAPPER (OpenAI/Anthropic)               ║
-║  ┌─────────┐    ┌─────────┐    ┌─────────┐             ║
-║  │ Client  │───▶│ FastAPI │───▶│ OpenAI  │             ║
-║  │         │◀───│ Server  │◀───│ API     │             ║
-║  └─────────┘    └─────────┘    └─────────┘             ║
-║  - Simple, reliable, managed                             ║
-║  - Cost: per token, latency: 1-3s                       ║
-║  - Best untuk: prototyping, low volume                   ║
-║                                                          ║
-║  PATTERN 2: SELF-HOSTED (vLLM/TGI)                       ║
-║  ┌─────────┐    ┌─────────┐    ┌─────────┐             ║
-║  │ Client  │───▶│ FastAPI │───▶│ vLLM    │             ║
-║  │         │◀───│ Server  │◀───│ Server  │             ║
-║  └─────────┘    └─────────┘    └─────────┘             ║
-║  - Full control, privacy                                 ║
-║  - Cost: GPU rental, latency: 100-500ms                  ║
-║  - Best untuk: high volume, sensitive data               ║
-║                                                          ║
-║  PATTERN 3: EDGE / LOCAL (llama.cpp/ollama)              ║
-║  ┌─────────┐    ┌─────────┐                             ║
-║  │ Client  │───▶│ Ollama  │                             ║
-║  │         │◀───│ (local) │                             ║
-║  └─────────┘    └─────────┘                             ║
-║  - No internet, private                                  ║
-║  - Cost: 0, latency: varies                              ║
-║  - Best untuk: development, privacy-critical             ║
-║                                                          ║
-║  OPTIMIZATION TECHNIQUES:                                ║
-║  - Quantization: FP16 → INT8 → INT4 (smaller, faster)    ║
-║  - Batch processing: multiple requests together            ║
-║  - KV Cache: reuse computation antar tokens              ║
-║  - Streaming: send tokens as generated                   ║
-║  - Prompt caching: cache common prefixes                 ║
-║                                                          ║
-╚══════════════════════════════════════════════════════════╝
-""")
+TARGET INSTRUCTION TUNING:
+- Format: Instruction -> Input -> Output
+- Contoh:
+  {
+    "instruction": "Translate English to French",
+    "input": "Hello, how are you?",
+    "output": "Bonjour, comment allez-vous?"
+  }
+- Dataset: Alpaca, Dolly, OpenAssistant
 
+DETAIL:
+- Instruction tuning membuat model lebih baik mengikuti instructions.
+- Format standar: instruction + input + output.
+- Quality dataset lebih penting daripada quantity.
 
-# ===========================================================
-# 🏋️ EXERCISE 1: Build RAG System for EE Domain
-# ===========================================================
+TARGET RLHF (Reinforcement Learning from Human Feedback):
+1. Supervised Fine-Tuning (SFT)
+2. Reward Model Training (human preferences)
+3. PPO (Proximal Policy Optimization)
+
+DETAIL:
+- SFT: fine-tune pada high-quality demonstrations.
+- Reward Model: train model untuk predict human preferences.
+- PPO: optimize policy untuk maximize expected reward.
+- RLHF adalah kunci untuk ChatGPT-like capabilities.
+
+TARGET QUANTIZATION:
+- FP32 -> FP16 -> INT8 -> INT4
+- Methods: GPTQ, AWQ, GGUF
+- Impact: smaller model, faster inference, lower memory
+- Tradeoff: slight accuracy loss
+
+DETAIL:
+- GPTQ: quantization berbasis gradient untuk minimize error.
+- AWQ: activation-aware quantization, protects salient weights.
+- GGUF: format untuk GGML, digunakan oleh llama.cpp.
+- Quantization bisa 2-4x memory reduction dengan minimal accuracy loss.
+
+Koneksi Teknik Elektro:
+- Fine-tuning = system adaptation (like adaptive filters)
+- LoRA = low-rank approximation (like model order reduction)
+- Quantization = reduced-precision ADC/DAC
+- RLHF = feedback control dengan human-in-the-loop
 """
-Bangun RAG system untuk dokumentasi Teknik Elektro:
-
-Requirements:
-1. Document ingestion: PDF/TXT dari manual, datasheet, paper
-2. Chunking strategy: semantic chunks (per section/paragraph)
-3. Embedding: Sentence-Transformers (all-MiniLM-L6-v2)
-4. Vector DB: ChromaDB (local) atau FAISS
-5. Query: natural language questions about EE topics
-6. Source citation: setiap jawaban harus cite sumber
-
-Contoh queries:
-- "Apa yang menyebabkan voltage sag?"
-- "Bagaimana cara diagnose fault di transformer?"
-- "Apa perbedaan THD dan TDD?"
-
-Bonus:
-- Gradio/Streamlit UI
-- Conversation history (multi-turn)
-- Re-ranking dengan cross-encoder
-"""
+print(finetuning_guide)
 
 
 # ===========================================================
-# 🏋️ EXERCISE 2: Fine-tune Small LLM
+# BAGIAN 5: Deployment Patterns
 # ===========================================================
-"""
-Fine-tune model kecil (Phi-3 / Llama 3.2 3B) untuk domain EE:
+print("\n" + "="*60)
+print("BAGIAN 5: DEPLOYMENT PATTERNS")
+print("="*60)
 
-Dataset preparation:
-1. Kumpulkan 100+ Q&A pairs tentang Teknik Elektro
-2. Format: instruction tuning (Alpaca format)
-   {
-     "instruction": "Jelaskan apa itu power factor",
-     "input": "",
-     "output": "Power factor adalah rasio antara..."
-   }
+deployment_patterns = """
+TARGET DEPLOYMENT OPTIONS:
 
-Fine-tuning dengan LoRA:
-1. Load base model (4-bit quantized)
-2. Add LoRA adapters (rank=16, alpha=32)
-3. Train 3-5 epochs
-4. Save adapter weights only
+1. API WRAPPER (OpenAI, Anthropic)
+   - Pros: no infrastructure, latest models, easy setup
+   - Cons: cost, latency, data privacy, rate limits
+   - Use case: prototyping, low-volume, non-sensitive data
+   - Cost: ~$0.01-0.03 per 1K tokens
+   
+   DETAIL:
+   - API wrapper adalah cara termudah untuk deploy LLM.
+   - OpenAI API punya streaming support untuk real-time responses.
+   - Rate limits perlu di-manage untuk high-volume applications.
+   - Data privacy concern untuk sensitive data.
 
-Evaluation:
-- Compare: base model vs fine-tuned model
-- Metrics: relevance, accuracy, technical depth
-- Test dengan questions di luar training set
-"""
+2. SELF-HOSTED (vLLM, TGI)
+   - Pros: full control, no per-request cost, data privacy
+   - Cons: infrastructure, expertise, model management
+   - Use case: high-volume, sensitive data, custom models
+   - Hardware: GPU required (A100, H100 untuk large models)
+   
+   DETAIL:
+   - vLLM: high-throughput inference dengan PagedAttention.
+     Throughput bisa 10-20x lebih tinggi dari naive serving.
+   - TGI (Text Generation Inference): HuggingFace's serving solution.
+     Supports streaming, quantization, dan safety.
+   - Self-hosted memerlukan GPU infrastructure yang mahal.
 
+3. EDGE DEPLOYMENT (ONNX, TensorRT, GGML)
+   - Pros: low latency, no network dependency
+   - Cons: limited model size, hardware constraints
+   - Use case: mobile, IoT, real-time applications
+   - Hardware: CPU atau edge GPU (Jetson)
+   
+   DETAIL:
+   - Edge deployment menggunakan quantized models.
+   - llama.cpp dengan GGUF format bisa run di CPU.
+   - MobileLLM, Phi-3 adalah models yang optimized untuk edge.
 
-# ===========================================================
-# 🏋️ EXERCISE 3: LLM Agent
-# ===========================================================
-"""
-Bangun simple agent dengan function calling:
+TARGET INFERENCE OPTIMIZATION:
 
-Tools:
-1. calculate_thd(harmonics) → return THD percentage
-2. convert_dbmw(value) → convert to dBm/Watts
-3. search_documentation(query) → RAG search
-4. get_equipment_status(equipment_id) → mock API call
+1. BATCHING
+   - Dynamic batching: group requests untuk efficient GPU utilization
+   - Continuous batching (vLLM): process tokens dari multiple requests
+   
+   DETAIL:
+   - Batching meningkatkan throughput dengan amortize overhead.
+   - Continuous batching (vLLM) lebih efisien dari static batching.
+   - Tradeoff: latency increase untuk individual requests.
 
-Agent logic:
-- ReAct pattern: Reason → Act → Observe
-- LLM decides which tool to use
-- Chain multiple tools untuk complex tasks
+2. KV CACHE
+   - Cache key-value pairs dari previous tokens
+   - Avoid redundant computation
+   - Critical untuk autoregressive generation
+   
+   DETAIL:
+   - KV cache menyimpan intermediate computations.
+   - Memory usage = O(batch_size * seq_len * d_model * num_layers * 2).
+   - PagedAttention (vLLM) mengoptimalkan KV cache memory management.
 
-Contoh conversation:
-User: "Equipment T-001 status dan apa THD-nya?"
-Agent: [call get_equipment_status] → [call calculate_thd] → answer
-"""
+3. SPECULATIVE DECODING
+   - Use small draft model untuk predict next tokens
+   - Verify dengan large model
+   - Speedup: 2-3x
+   
+   DETAIL:
+   - Draft model lebih cepat tapi less accurate.
+   - Large model memverifikasi predictions dari draft model.
+   - Effective untuk tasks dengan repetitive patterns.
 
+4. QUANTIZATION
+   - INT8/INT4 inference
+   - Minimal accuracy loss
+   - 2-4x memory reduction
 
-# ===========================================================
-# 🔥 CHALLENGE: Production LLM Application
-# ===========================================================
-"""
-Bangun LLM application production-ready:
-
-Requirements:
-1. RAG dengan 1000+ dokumen EE
-2. FastAPI backend dengan streaming responses
-3. Chat interface (Streamlit/Gradio)
-4. Conversation memory
-5. Cost tracking (tokens used per request)
-6. Rate limiting
-7. Prompt versioning
-8. Evaluation framework (benchmark Q&A set)
+TARGET SERVING INFRASTRUCTURE:
 
 Architecture:
-┌──────────┐    ┌──────────┐    ┌──────────┐
-│ Streamlit│───▶│ FastAPI  │───▶│ ChromaDB │
-│  (UI)    │◀───│ (Backend│◀───│ (Vector) │
-└──────────┘    └────┬─────┘    └──────────┘
-                     │
-                     ▼
-              ┌──────────┐
-              │ OpenAI / │
-              │ Local LLM│
-              └──────────┘
+  Load Balancer -> API Gateway -> Model Servers (auto-scaling)
+                          |
+                   Cache (Redis) -> Vector DB (jika RAG)
 
-Deliverable:
-- Code repository
-- Docker Compose
-- Benchmark report
-- Demo video
+Components:
+  - API: FastAPI/Flask untuk REST, gRPC untuk high-performance
+  - Queue: Redis/RabbitMQ untuk async processing
+  - Cache: Redis untuk frequent queries
+  - Monitoring: Prometheus + Grafana
+  - Auto-scaling: Kubernetes HPA
+
+TARGET COST OPTIMIZATION:
+
+1. Right-size model:
+   - 7B model often sufficient
+   - 70B only jika absolutely necessary
+   
+2. Use caching:
+   - Cache common queries
+   - Redis untuk semantic cache
+   
+3. Optimize prompts:
+   - Shorter prompts = fewer tokens
+   - Use system prompts efficiently
+   
+4. Batch requests:
+   - Higher throughput
+   - Lower cost per request
+   
+5. Hybrid approach:
+   - Small model untuk simple tasks
+   - Large model untuk complex tasks
+   - Router untuk distribute requests
+   
+   DETAIL:
+   - Router bisa menggunakan heuristics atau classifier.
+   - Simple tasks: factual Q&A, summarization.
+   - Complex tasks: reasoning, code generation.
+"""
+print(deployment_patterns)
+
+
+# ===========================================================
+# LATIHAN 24: LLM Application Development
+# ===========================================================
+"""
+TARGET Learning Objectives:
+   - Membangun LLM-powered application
+   - Mengimplementasikan RAG pipeline
+   - Melakukan fine-tuning dengan LoRA
+   - Deploy LLM untuk production
+
+PANDUAN LANGKAH-LANGKAH:
+
+STEP 1: Build RAG Application
+-----------------------------
+   Konteks: Technical Documentation Q&A untuk Power Systems
+   
+   a) Document ingestion:
+      - Parse technical documents (PDF, HTML, Markdown)
+      - Chunk documents (512-1024 tokens per chunk)
+      - Compute embeddings (OpenAI, sentence-transformers)
+      - Store di vector database (Chroma, Pinecone)
+      
+      DETAIL:
+      - Chunking strategy: fixed-size, semantic, atau recursive.
+      - Overlap antar chunks untuk maintain context.
+      - Embeddings: OpenAI ada-002, sentence-transformers all-MiniLM-L6-v2.
+      
+   b) Retrieval:
+      - Embed user query
+      - Semantic search (cosine similarity)
+      - Re-rank dengan cross-encoder
+      - Return top-5 relevant chunks
+      
+      DETAIL:
+      - Semantic search menggunakan vector similarity.
+      - Re-ranking dengan cross-encoder lebih accurate.
+      - Hybrid search: combine semantic + keyword search.
+      
+   c) Generation:
+      - Build prompt dengan context
+      - Generate answer dengan LLM
+      - Cite sources (chunk references)
+      
+      DETAIL:
+      - Prompt harus instruct model untuk menggunakan context.
+      - Cite sources untuk verifiability dan trust.
+      - Handle case jika context tidak cukup.
+      
+   d) Evaluation:
+      - Test dengan 50+ questions
+      - Metrics: relevance, accuracy, completeness
+      - Human evaluation: rate 1-5
+
+
+STEP 2: Fine-tuning dengan LoRA
+-------------------------------
+   a) Dataset preparation:
+      - Collect domain-specific conversations
+      - Format: instruction + input + output
+      - Split: 80% train, 10% val, 10% test
+      
+      DETAIL:
+      - Quality > quantity untuk fine-tuning dataset.
+      - Format standar: Alpaca format atau ChatML format.
+      
+   b) LoRA configuration:
+      - Base model: Llama-2-7B atau Mistral-7B
+      - Rank: 16 atau 32
+      - Target modules: q_proj, v_proj
+      - Learning rate: 2e-4
+      
+      DETAIL:
+      - Rank 16 biasanya cukup untuk most tasks.
+      - Target modules: attention weights (q_proj, v_proj, k_proj, o_proj).
+      - Alpha (scaling factor) biasanya = 2 * rank.
+      
+   c) Training:
+      - QLoRA untuk memory efficiency
+      - Batch size: 4-8
+      - Epochs: 3-5
+      - Evaluate: loss, perplexity
+      
+      DETAIL:
+      - QLoRA memungkinkan training di consumer GPUs (RTX 3090, 4090).
+      - Gradient accumulation untuk effective larger batch size.
+      - Learning rate scheduler: cosine with warmup.
+      
+   d) Inference:
+      - Merge adapters dengan base model (opsional)
+      - Test: domain-specific questions
+      - Compare: before vs after fine-tuning
+
+
+STEP 3: Deployment
+------------------
+   a) API Development:
+      - FastAPI endpoints: /chat, /rag, /health
+      - Async processing untuk concurrent requests
+      - Request/response validation (Pydantic)
+      
+      DETAIL:
+      - FastAPI dengan async support untuk high concurrency.
+      - Streaming responses untuk better UX.
+      - Rate limiting untuk prevent abuse.
+      
+   b) Containerization:
+      - Dockerfile untuk model dan API
+      - Multi-stage build untuk optimize size
+      - Docker Compose untuk local development
+      
+   c) Production deployment:
+      - Kubernetes dengan GPU nodes
+      - Horizontal Pod Autoscaler (HPA)
+      - Ingress untuk load balancing
+      - Monitoring dengan Prometheus/Grafana
+
+
+STEP 4: Evaluation & Iteration
+------------------------------
+   a) Automated evaluation:
+      - Benchmark dataset (50+ questions)
+      - Metrics: accuracy, latency, cost per query
+      - Regression testing untuk setiap deployment
+      
+   b) User feedback:
+      - Thumbs up/down untuk responses
+      - Feedback collection pipeline
+      - Periodic retraining dengan feedback
+      
+   c) A/B testing:
+      - Compare: different prompts, models, RAG strategies
+      - Metrics: user satisfaction, task completion
+      - Statistical significance testing
+
+
+TIPS:
+   - Start dengan OpenAI API untuk prototyping cepat
+   - Use HuggingFace PEFT library untuk LoRA
+   - ChromaDB = simple vector DB untuk development
+   - vLLM = high-throughput inference engine
+   - LangChain = framework untuk LLM applications
+
+PERINGATAN COMMON MISTAKES:
+   - RAG tanpa proper chunking (too large/small)
+   - Fine-tuning tanpa enough data
+   - No evaluation framework
+   - Ignore latency requirements
+   - No cost monitoring
+   - Deploy tanpa guardrails (safety, bias)
+
+TARGET EXPECTED OUTPUT:
+   - Working RAG application
+   - Fine-tuned model dengan domain knowledge
+   - Production API dengan monitoring
+   - Evaluation framework
+   - Documentation dan deployment guide
 """
 
 
+# ===========================================================
+# CHALLENGE: Production LLM System
+# ===========================================================
+"""
+TARGET Learning Objectives:
+   - Membangun end-to-end LLM system untuk production
+   - Mengintegrasikan dengan existing infrastructure
+   - Implementasi comprehensive monitoring dan safety
+
+PANDUAN LANGKAH-LANGKAH:
+
+STEP 1: Problem Definition
+--------------------------
+   Pilih use case:
+   
+   a) Industrial Assistant:
+      - Q&A untuk equipment manuals
+      - Troubleshooting guidance
+      - Maintenance scheduling advice
+      
+   b) Code Assistant:
+      - Generate control system code
+      - Explain algorithms
+      - Debug PLC programs
+      
+   c) Report Generator:
+      - Generate technical reports
+      - Summarize inspection findings
+      - Create maintenance recommendations
+
+
+STEP 2: System Architecture
+---------------------------
+   a) Data Layer:
+      - Document store (S3, GCS)
+      - Vector database (Pinecone, Weaviate)
+      - Conversation history (PostgreSQL)
+      
+   b) Application Layer:
+      - API Gateway (rate limiting, auth)
+      - RAG pipeline (retrieval + generation)
+      - Fine-tuned model (LoRA adapters)
+      - Prompt management (versioning)
+      
+   c) Serving Layer:
+      - Model servers (vLLM/TGI)
+      - Load balancer
+      - Cache (Redis)
+      - Queue (RabbitMQ untuk async)
+      
+   d) Monitoring Layer:
+      - Performance metrics (latency, throughput)
+      - Quality metrics (relevance, hallucination)
+      - Safety metrics (toxicity, bias)
+      - Cost tracking (per request, per user)
+
+
+STEP 3: Safety & Guardrails
+---------------------------
+   a) Input validation:
+      - Rate limiting (requests per minute)
+      - Content filtering (block harmful inputs)
+      - Size limits (max tokens)
+      
+   b) Output filtering:
+      - Toxicity detection
+      - PII detection dan redaction
+      - Fact checking (jika possible)
+      
+   c) Fallback mechanisms:
+      - Jika model fails -> heuristic response
+      - Jika confidence low -> "I don't know"
+      - Jika safety triggered -> block response
+      
+   d) Audit logging:
+      - Log all requests dan responses
+      - Track user interactions
+      - Compliance requirements
+
+
+STEP 4: Performance Optimization
+--------------------------------
+   a) Model optimization:
+      - Quantization (INT8/INT4)
+      - Pruning (remove unnecessary weights)
+      - Distillation (smaller student model)
+      
+   b) Serving optimization:
+      - Dynamic batching
+      - KV cache optimization
+      - Speculative decoding
+      
+   c) Infrastructure:
+      - GPU cluster dengan auto-scaling
+      - CDN untuk static assets
+      - Edge caching untuk common queries
+
+
+STEP 5: Evaluation & Improvement
+--------------------------------
+   a) Automated evaluation:
+      - Benchmark suite (100+ test cases)
+      - Continuous evaluation pipeline
+      - Regression detection
+      
+   b) Human evaluation:
+      - Expert review (domain experts)
+      - User satisfaction surveys
+      - A/B testing dengan real users
+      
+   c) Iteration:
+      - Collect feedback
+      - Identify failure modes
+      - Retrain atau fine-tune
+      - Deploy improvements
+
+
+TIPS:
+   - Use LangChain atau LlamaIndex untuk orchestration
+   - Weights & Biases untuk experiment tracking
+   - MLflow untuk model registry
+   - Great Expectations untuk data validation
+   - Guardrails AI untuk output validation
+
+PERINGATAN COMMON MISTAKES:
+   - Ignore safety dan guardrails
+   - No monitoring untuk hallucinations
+   - Underestimate infrastructure costs
+   - No fallback untuk model failures
+   - Ignore data privacy regulations
+   - Deploy tanpa proper testing
+
+TARGET EXPECTED OUTPUT:
+   - Production LLM application
+   - RAG dengan domain-specific knowledge
+   - Safety guardrails dan monitoring
+   - Performance optimization (latency < 2s)
+   - Cost optimization (< $0.01 per query)
+   - Comprehensive documentation
+
+LLM Engineering adalah skill yang sangat dicari di 2025-2026!
+Master ini dan kamu akan sangat valuable.
+"""
+
 print("\n" + "="*50)
-print("✅ Modul selesai! Lanjut ke projects/ untuk FLAGSHIP project")
+print("SELESAI FASE 8!")
 print("="*50)
+print("""
+Kamu sekarang bisa:
+OK Design dan implement feature stores
+OK Build model monitoring dan drift detection
+OK Develop LLM-powered applications
+OK Deploy production ML systems
+
+SELESAI!
+
+Kamu telah menyelesaikan seluruh kurikulum ML Engineer Track!
+
+Next steps:
+1. Review semua projects di folder projects/
+2. Build portfolio dengan 3+ end-to-end projects
+3. Apply untuk ML Engineer roles
+4. Continue learning - ML field evolves rapidly!
+
+Good luck!
+""")

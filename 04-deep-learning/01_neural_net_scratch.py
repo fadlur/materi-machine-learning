@@ -1,6 +1,6 @@
 """
 =============================================================
-FASE 4 — MODUL 1: NEURAL NETWORK FROM SCRATCH
+FASE 4 - MODUL 1: NEURAL NETWORK FROM SCRATCH
 =============================================================
 Sebelum pakai PyTorch, kita bangun neural network dari NOL.
 
@@ -27,16 +27,57 @@ np.random.seed(42)
 
 
 # ===========================================================
-# 📖 BAGIAN 1: Single Neuron (Perceptron)
+# BAGIAN 1: Single Neuron (Perceptron)
 # ===========================================================
 # Satu neuron = Linear Regression/Logistic Regression!
-# output = activation(w·x + b)
+# output = activation(w dot x + b)
+#
+# Matematika Single Neuron:
+# z = Sum(w_i * x_i) + b = w dot x + b
+# output = activation(z)
+#
+# Untuk sigmoid: output = 1 / (1 + exp(-z))
+# Ini identik dengan logistic regression!
+#
+# Untuk linear (no activation): output = z
+# Ini identik dengan linear regression!
+#
+# Activation Functions:
+# 1. Sigmoid: f(z) = 1 / (1 + exp(-z))
+#    Output: (0, 1). Cocok untuk probabilitas.
+#    Derivative: f'(z) = f(z) * (1 - f(z))
+#    PERINGATAN: Vanishing gradient! Untuk |z| besar, gradient ~ 0.
+#
+# 2. Tanh: f(z) = (exp(z) - exp(-z)) / (exp(z) + exp(-z))
+#    Output: (-1, 1). Zero-centered (lebih baik dari sigmoid untuk hidden layers).
+#    Derivative: f'(z) = 1 - f(z)**2
+#    PERINGATAN: Masih ada vanishing gradient, tapi tidak seburuk sigmoid.
+#
+# 3. ReLU: f(z) = max(0, z)
+#    Output: [0, inf). Sederhana dan cepat.
+#    Derivative: f'(z) = 1 if z > 0, else 0.
+#    Kelebihan: tidak vanishing untuk z > 0. Computasi murah.
+#    PERINGATAN: Dead neurons! Jika z <= 0, neuron tidak belajar lagi.
+#
+# 4. Leaky ReLU: f(z) = max(alpha*z, z) dengan alpha ~ 0.01
+#    Solusi untuk dead neurons: gradient kecil tapi tidak nol untuk z < 0.
+#
+# Kenapa activation function penting?
+# - Tanpa activation, stacked linear layers = single linear layer!
+#   (W2 @ (W1 @ x) = (W2 @ W1) @ x = W' @ x)
+# - Nonlinearity memungkinkan network mempelajari fungsi kompleks.
+# - Activation function menentukan "shape" dari decision boundary.
+#
+# Koneksi Teknik Elektro:
+# - Op-amp dengan saturating nonlinearity
+# - Transfer function di control systems
+# - Hysteresis di magnetic materials
 
 class Neuron:
     """
-    Single neuron — building block dari neural network.
+    Single neuron - building block dari neural network.
     
-    Model: z = w·x + b, output = activation(z)
+    Model: z = w dot x + b, output = activation(z)
     
     Parameters:
     -----------
@@ -56,7 +97,8 @@ class Neuron:
     ------
     - Single neuron = logistic regression (sigmoid) atau
       linear regression (no activation)
-    - Weights diinisialisasi kecil (×0.1) untuk stabilitas
+    - Weights diinisialisasi kecil (*0.1) untuk stabilitas
+      (menghindari large outputs di awal training)
     - Koneksi Teknik Elektro: mirip dengan op-amp dengan
       feedback dan saturating nonlinearity
     """
@@ -82,6 +124,7 @@ class Neuron:
         """
         z = x @ self.w + self.b
         if self.activation == 'sigmoid':
+            # np.clip untuk mencegah overflow di exp
             return 1 / (1 + np.exp(-np.clip(z, -500, 500)))
         elif self.activation == 'relu':
             return np.maximum(0, z)
@@ -110,18 +153,59 @@ for ax, (name, values) in zip(axes, activations.items()):
 plt.tight_layout()
 plt.savefig('01_activations.png', dpi=100, bbox_inches='tight')
 plt.close()
-print("📊 Saved: 01_activations.png")
+print("OK Saved: 01_activations.png")
 
 
 # ===========================================================
-# 📖 BAGIAN 2: Multi-Layer Neural Network from Scratch
+# BAGIAN 2: Multi-Layer Neural Network from Scratch
 # ===========================================================
+# Neural network dengan hidden layers mempelajari representasi hierarkis:
+# - Layer 1: fitur dasar (edges, patterns sederhana)
+# - Layer 2: kombinasi fitur dasar (textures, shapes)
+# - Layer 3+: fitur semantik tingkat tinggi
+#
+# Matematika Forward Pass:
+# z[l] = a[l-1] @ W[l] + b[l]
+# a[l] = activation(z[l])
+# Output: a[L] (L = layer terakhir)
+#
+# Matematika Backpropagation (Chain Rule):
+# Untuk output layer: delta[L] = (a[L] - y) * activation'(z[L])
+# Untuk hidden layer: delta[l] = (delta[l+1] @ W[l+1].T) * activation'(z[l])
+# Gradient W[l] = a[l-1].T @ delta[l]
+# Gradient b[l] = sum(delta[l], axis=0)
+#
+# Binary Cross-Entropy Loss:
+# L = -1/N * Sum(y * log(y_hat) + (1-y) * log(1-y_hat))
+# Derivative: dL/dy_hat = (y_hat - y) / (y_hat * (1-y_hat))
+# Untuk sigmoid output, gradient terhadap z menyederhana menjadi:
+# delta = a[L] - y (karena derivative sigmoid * derivative loss = a - y)
+# Ini adalah alasan kenapa sigmoid + BCE sangat populer.
+#
+# Momentum:
+# v_t = beta * v_{t-1} - lr * gradient
+# w_t = w_{t-1} + v_t
+# Momentum menambahkan "inertia" ke update, membantu melewati
+# local minimum dan flat regions.
+#
+# Weight Initialization:
+# - He initialization: W ~ N(0, sqrt(2/n_in))
+#   Optimal untuk ReLU. Mencegah vanishing/exploding di deep networks.
+# - Xavier/Glorot: W ~ N(0, sqrt(1/n_in))
+#   Optimal untuk sigmoid/tanh.
+# - Zero initialization: TIDAK BOLEH! Semua neuron jadi identik.
+#
+# Koneksi Teknik Elektro:
+# - Forward pass = signal propagation melalui cascaded systems
+# - Backprop = sensitivity analysis (adjoint method)
+# - Chain rule = transfer function cascading
+# - Momentum = inertia di mechanical systems
 
 class NeuralNetwork:
     """
     Multi-layer neural network from scratch.
     
-    Architecture: Input → Hidden₁ → Hidden₂ → ... → Output
+    Architecture: Input -> Hidden1 -> Hidden2 -> ... -> Output
     Activation: ReLU untuk hidden layers, Sigmoid untuk output
     Loss: Binary Cross-Entropy
     Optimizer: SGD with momentum
@@ -151,7 +235,7 @@ class NeuralNetwork:
     ------
     - Forward: simpan activations dan z_values untuk backprop
     - Backprop: chain rule dari output ke input
-    - Momentum: velocity = β*velocity - lr*gradient
+    - Momentum: velocity = beta*velocity - lr*gradient
     - He initialization: good untuk ReLU
     
     Koneksi Teknik Elektro:
@@ -174,6 +258,8 @@ class NeuralNetwork:
         
         for i in range(len(layer_sizes) - 1):
             # He initialization: good for ReLU
+            # Var(W) = 2 / n_in mencegah variance activation tetap konstan
+            # seiring kedalaman network bertambah.
             w = np.random.randn(layer_sizes[i], layer_sizes[i+1]) * np.sqrt(2.0 / layer_sizes[i])
             b = np.zeros(layer_sizes[i+1])
             self.weights.append(w)
@@ -185,14 +271,17 @@ class NeuralNetwork:
         return np.maximum(0, z)
     
     def relu_derivative(self, z):
+        # Derivative ReLU: 1 jika z > 0, 0 jika z <= 0
+        # Di z=0, technically undefined, tapi praktis kita set ke 0 atau 1.
         return (z > 0).astype(float)
     
     def sigmoid(self, z):
+        # Clip untuk mencegah overflow/underflow di exp
         return 1 / (1 + np.exp(-np.clip(z, -500, 500)))
     
     def forward(self, X):
         """
-        Forward pass — simpan semua intermediate values untuk backprop.
+        Forward pass - simpan semua intermediate values untuk backprop.
         
         Parameters:
         -----------
@@ -224,7 +313,7 @@ class NeuralNetwork:
     
     def backward(self, y):
         """
-        Backpropagation — the CORE of neural network training.
+        Backpropagation - the CORE of neural network training.
         
         Parameters:
         -----------
@@ -233,7 +322,7 @@ class NeuralNetwork:
             
         Notes:
         ------
-        Chain rule: ∂L/∂w = ∂L/∂a · ∂a/∂z · ∂z/∂w
+        Chain rule: dL/dw = dL/da * da/dz * dz/dw
         
         Ini mirip dengan analisis cascaded systems di Teknik Elektro:
         transfer function total = product of individual transfer functions.
@@ -248,6 +337,8 @@ class NeuralNetwork:
         y = y.reshape(-1, 1) if y.ndim == 1 else y
         
         # Output layer gradient
+        # Untuk sigmoid + BCE, gradient terhadap z_pre-activation menyederhana
+        # menjadi (a - y). Ini karena dL/da * da/dz = (a-y)/(a*(1-a)) * a*(1-a) = a-y
         delta = self.activations[-1] - y
         
         gradients_w = []
@@ -256,6 +347,7 @@ class NeuralNetwork:
         # Backpropagate through layers (dari output ke input)
         for i in range(len(self.weights) - 1, -1, -1):
             # Gradient untuk weights dan biases di layer i
+            # dW = a[l-1].T @ delta[l] (rata-rata di-batch)
             dw = (1/n) * (self.activations[i].T @ delta)
             db = (1/n) * np.sum(delta, axis=0)
             gradients_w.insert(0, dw)
@@ -263,9 +355,12 @@ class NeuralNetwork:
             
             if i > 0:
                 # Propagate delta ke layer sebelumnya
+                # delta[l-1] = (delta[l] @ W[l].T) * activation'(z[l-1])
                 delta = (delta @ self.weights[i].T) * self.relu_derivative(self.z_values[i-1])
         
         # Update weights dengan momentum
+        # Momentum menambahkan velocity yang terakumulasi dari gradient sebelumnya.
+        # Ini membantu melewati: (1) local minimum, (2) saddle points, (3) flat regions.
         for i in range(len(self.weights)):
             self.velocity_w[i] = self.momentum * self.velocity_w[i] - self.lr * gradients_w[i]
             self.velocity_b[i] = self.momentum * self.velocity_b[i] - self.lr * gradients_b[i]
@@ -285,6 +380,17 @@ class NeuralNetwork:
         epochs : int, default 100
         batch_size : int, default 32
         verbose : bool, default True
+            
+        Notes:
+        ------
+        Mini-batch training:
+        - Full batch: stabil tapi lambat, bisa stuck di local minimum.
+        - Stochastic (batch=1): noisy tapi bisa escape local minimum.
+        - Mini-batch: kompromi. Default 32-128.
+        
+        Shuffle setiap epoch:
+        - Mencegah learning order-dependent.
+        - Membantu generalisasi.
         """
         n = len(X)
         
@@ -306,6 +412,7 @@ class NeuralNetwork:
             # Compute epoch loss
             output = self.forward(X)
             y_col = y.reshape(-1, 1) if y.ndim == 1 else y
+            # Tambahkan epsilon untuk mencegah log(0)
             loss = -np.mean(y_col * np.log(output + 1e-15) +
                            (1 - y_col) * np.log(1 - output + 1e-15))
             self.loss_history.append(loss)
@@ -323,8 +430,11 @@ class NeuralNetwork:
 
 
 # ===========================================================
-# 📖 BAGIAN 3: Test Neural Network
+# BAGIAN 3: Test Neural Network
 # ===========================================================
+# Dataset make_moons: non-linearly separable, cocok untuk demo NN.
+# Mengapa make_moons? Karena linear model (logistic regression) GAGAL,
+# tapi neural network dengan hidden layer BERHASIL.
 
 from sklearn.datasets import make_moons
 
@@ -333,6 +443,10 @@ X_train, X_test = X[:400], X[400:]
 y_train, y_test = y[:400], y[400:]
 
 # Normalize
+# WAJIB normalize sebelum training neural network!
+# Alasan: gradient descent konvergen lebih cepat pada data ter-scale.
+# Jika fitur memiliki scale berbeda, loss surface menjadi elongated,
+# menyebabkan oscillation dan convergence lambat.
 mean, std = X_train.mean(axis=0), X_train.std(axis=0)
 X_train_n = (X_train - mean) / std
 X_test_n = (X_test - mean) / std
@@ -368,11 +482,11 @@ axes[1].grid(True)
 plt.tight_layout()
 plt.savefig('02_nn_scratch_result.png', dpi=100, bbox_inches='tight')
 plt.close()
-print("📊 Saved: 02_nn_scratch_result.png")
+print("OK Saved: 02_nn_scratch_result.png")
 
 
 # ===========================================================
-# 📖 BAGIAN 4: Vanishing/Exploding Gradients
+# BAGIAN 4: Vanishing/Exploding Gradients
 # ===========================================================
 print("\n=== Gradient Flow Analysis ===")
 print("""
@@ -380,18 +494,18 @@ Masalah utama di deep networks:
 
 1. VANISHING GRADIENTS
    - Sigmoid/Tanh: gradient max = 0.25 (sigmoid), 1.0 (tanh)
-   - Di deep net: gradient = product of small numbers → mendekati 0
+   - Di deep net: gradient = product of small numbers -> mendekati 0
    - Layer awal hampir tidak belajar!
    - Solusi: ReLU activation, BatchNorm, Residual connections
 
 2. EXPLODING GRADIENTS
-   - Gradient = product of large numbers → infinity
+   - Gradient = product of large numbers -> infinity
    - Weights menjadi NaN
    - Solusi: Gradient clipping, proper initialization
 
 3. DEAD NEURONS (khusus ReLU)
    - ReLU output = 0 jika input < 0
-   - Gradient = 0 → neuron "mati" dan tidak belajar
+   - Gradient = 0 -> neuron "mati" dan tidak belajar
    - Solusi: Leaky ReLU, ELU, GELU
 
 Dengan background Teknik Elektro, pikirkan ini sebagai:
@@ -402,24 +516,24 @@ Dengan background Teknik Elektro, pikirkan ini sebagai:
 
 
 # ===========================================================
-# 🏋️ EXERCISE 11: Extend the Neural Network
+# LATIHAN 11: Extend the Neural Network
 # ===========================================================
 """
-🎯 Learning Objectives:
+TARGET Learning Objectives:
    - Memperluas neural network dengan fitur modern
    - Memverifikasi backpropagation dengan gradient checking
    - Memahami efek berbagai weight initialization
 
-📋 LANGKAH-LANGKAH:
+PANDUAN LANGKAH-LANGKAH:
 
 STEP 1: Tambahkan Support untuk Fitur Modern
-─────────────────────────────────────────────
+---------------------------------------------
 Modifikasi class NeuralNetwork untuk support:
 
    a) Leaky ReLU, ELU, GELU activation:
-      - Leaky ReLU: max(αx, x) dengan α=0.01
-      - ELU: x jika x>0, α(exp(x)-1) jika x≤0
-      - GELU: x * Φ(x) (Gaussian CDF)
+      - Leaky ReLU: max(alpha*x, x) dengan alpha=0.01
+      - ELU: x jika x>0, alpha(exp(x)-1) jika x<=0
+      - GELU: x * Phi(x) (Gaussian CDF)
       
    b) Dropout regularization:
       - During training: randomly set p% neurons to 0
@@ -436,7 +550,7 @@ Modifikasi class NeuralNetwork untuk support:
       - Loss: categorical cross-entropy
       - Gradient: probs - y_one_hot
 
-   💡 KENAPA fitur ini penting?
+   TIPS KENAPA fitur ini penting?
      - Leaky ReLU/ELU/GELU: menghindari dead neurons
      - Dropout: mencegah overfitting
      - BatchNorm: mempercepat training, memungkinkan higher lr
@@ -444,13 +558,13 @@ Modifikasi class NeuralNetwork untuk support:
 
 
 STEP 2: Implementasi Gradient Checking
-───────────────────────────────────────
+---------------------------------------
 Verifikasi backpropagation dengan numerical gradient:
 
    a) Untuk setiap weight w:
-      - Compute loss(w + ε)
-      - Compute loss(w - ε)
-      - Numerical gradient = (loss(w+ε) - loss(w-ε)) / (2ε)
+      - Compute loss(w + epsilon)
+      - Compute loss(w - epsilon)
+      - Numerical gradient = (loss(w+epsilon) - loss(w-epsilon)) / (2*epsilon)
       
    b) Bandingkan dengan analytical gradient dari backprop
    c) Relative error harus < 1e-5
@@ -458,19 +572,19 @@ Verifikasi backpropagation dengan numerical gradient:
    Formula relative error:
    |num_grad - ana_grad| / (|num_grad| + |ana_grad| + eps)
    
-   💡 KENAPA gradient checking?
+   TIPS KENAPA gradient checking?
      - Backpropagation mudah salah implementasi
      - Gradient checking adalah unit test untuk backprop
      - Wajib dilakukan saat mengembangkan architecture baru
 
 
 STEP 3: Eksperimen Weight Initialization
-─────────────────────────────────────────
+-----------------------------------------
    Bandingkan 5 strategi inisialisasi:
    
    a) Zero initialization:
       - weights = 0
-      - Ekspektasi: semua neuron identical → tidak belajar
+      - Ekspektasi: semua neuron identical -> tidak belajar
       
    b) Random normal (0.01):
       - weights = np.random.randn() * 0.01
@@ -488,7 +602,7 @@ STEP 3: Eksperimen Weight Initialization
       - weights = orthogonal matrix * scale
       - Preserves norm through layers
       
-   🧪 Test:
+   TEST:
    - Train network dengan masing-masing initialization
    - Plot: gradient magnitude per layer
    - Plot: training loss curve
@@ -496,32 +610,32 @@ STEP 3: Eksperimen Weight Initialization
 
 
 STEP 4: Visualisasi Gradient Flow
-─────────────────────────────────
+---------------------------------
    Plot magnitude gradient di setiap layer selama training:
    
    a) Untuk setiap epoch, hitung mean absolute gradient per layer
    b) Plot: layer vs gradient magnitude (heatmap atau line plot)
    c) Identifikasi: ada layer dengan vanishing/exploding gradients?
    
-   💡 KENAPA visualisasi?
+   TIPS KENAPA visualisasi?
      - Membantu diagnose training issues
      - Layer dengan gradient ~0 = tidak belajar
      - Layer dengan gradient huge = unstable
 
 
-💡 HINTS:
-   - Untuk GELU, gunakan approx: 0.5*x*(1+tanh(sqrt(2/π)*(x+0.044715*x^3)))
-   - Untuk gradient checking, ε = 1e-5
+TIPS HINTS:
+   - Untuk GELU, gunakan approx: 0.5*x*(1+tanh(sqrt(2/pi)*(x+0.044715*x**3)))
+   - Untuk gradient checking, epsilon = 1e-5
    - Untuk BatchNorm, simpan running_mean dan running_var
    - Orthogonal init: np.linalg.qr(np.random.randn(n, n))[0]
 
-⚠️ COMMON MISTAKES:
+PERINGATAN COMMON MISTAKES:
    - Dropout diterapkan saat inference
    - BatchNorm menggunakan batch stats saat inference
-   - Gradient checking dengan ε terlalu kecil → numerical issues
+   - Gradient checking dengan epsilon terlalu kecil -> numerical issues
    - Lupa scale dropout output saat inference
 
-🎯 EXPECTED OUTPUT:
+TARGET EXPECTED OUTPUT:
    - NeuralNetwork yang support modern features
    - Gradient checking passing (relative error < 1e-5)
    - He initialization paling stabil untuk ReLU
@@ -530,33 +644,33 @@ STEP 4: Visualisasi Gradient Flow
 
 
 # ===========================================================
-# 🔥 CHALLENGE: Universal Function Approximator
+# CHALLENGE: Universal Function Approximator
 # ===========================================================
 """
-🎯 Learning Objectives:
+TARGET Learning Objectives:
    - Membuktikan teorema Universal Approximation
    - Memahami tradeoff depth vs width
    - Menganalisis representasi internal neural network
 
-📋 LANGKAH-LANGKAH:
+PANDUAN LANGKAH-LANGKAH:
 
 STEP 1: Define Target Function
-──────────────────────────────
+------------------------------
 Buat fungsi target yang kompleks:
    f(x) = sin(x) * cos(2x) + 0.5 * sin(5x)
    
 Generate data:
-   x = np.linspace(-2π, 2π, 1000)
+   x = np.linspace(-2*pi, 2*pi, 1000)
    y = f(x) + noise
    
-💡 KENAPA fungsi ini?
+TIPS KENAPA fungsi ini?
   - Non-linear (tidak bisa di-approximate dengan linear model)
   - Multiple frequency components
   - Memerlukan representasi hierarchical
 
 
 STEP 2: Experiment with Architecture
-────────────────────────────────────
+------------------------------------
 Coba berbagai konfigurasi:
 
    a) Depth experiment (width fixed = 32):
@@ -573,7 +687,7 @@ Coba berbagai konfigurasi:
       - 32 neurons per layer
       - 64 neurons per layer
       
-   💡 KENAPA experiment ini?
+   TIPS KENAPA experiment ini?
      - Teorema UAT: 1 hidden layer cukup untuk approximate
        ANY continuous function (dengan width yang cukup)
      - Tapi dalam praktik: deep networks lebih efisien
@@ -581,21 +695,21 @@ Coba berbagai konfigurasi:
 
 
 STEP 3: Train and Evaluate
-───────────────────────────
+---------------------------
    Untuk setiap konfigurasi:
    a) Train sampai convergence
    b) Evaluate: MSE pada test set
    c) Plot: true function vs approximation
    d) Count: total number of parameters
    
-   💡 Analisis:
+   TIPS Analisis:
      - Mana yang lebih penting: depth atau width?
      - Berapa minimum parameters untuk error < 0.01?
      - Apakah deeper always better?
 
 
 STEP 4: Analyze Internal Representations
-──────────────────────────────────────────
+------------------------------------------
    Untuk network terbaik, analisis hidden layers:
    
    a) Visualisasi activation patterns:
@@ -616,27 +730,27 @@ STEP 4: Analyze Internal Representations
 
 
 STEP 5: Conclusion
-──────────────────
+------------------
    Buat kesimpulan:
    - Minimum depth & width untuk approximate fungsi ini dengan error < 0.01
    - Insight tentang representasi hierarchical
    - Recommendation untuk choosing architecture
 
 
-💡 HINTS:
+TIPS HINTS:
    - Gunakan MSE loss untuk regression
    - Output layer: linear (tanpa activation)
    - Learning rate: 0.01-0.1
    - Early stopping jika loss stagnate
    - Smoothing dengan moving average untuk visualisasi
 
-⚠️ COMMON MISTAKES:
-   - Terlalu few parameters → underfitting
-   - Terlalu many parameters → overfitting
-   - Learning rate terlalu besar → divergence
-   - Tidak normalize input → training instabil
+PERINGATAN COMMON MISTAKES:
+   - Terlalu few parameters -> underfitting
+   - Terlalu many parameters -> overfitting
+   - Learning rate terlalu besar -> divergence
+   - Tidak normalize input -> training instabil
 
-🎯 EXPECTED OUTPUT:
+TARGET EXPECTED OUTPUT:
    - Network dengan MSE < 0.01
    - Analysis: depth vs width tradeoff
    - Visualisasi internal representations
@@ -646,5 +760,5 @@ Ini fondasi untuk memahami kenapa deep learning bekerja!
 """
 
 print("\n" + "="*50)
-print("✅ Modul selesai! Lanjut ke: 04-deep-learning/02_pytorch_fundamentals.py")
+print("OK Modul selesai! Lanjut ke: 04-deep-learning/02_pytorch_fundamentals.py")
 print("="*50)

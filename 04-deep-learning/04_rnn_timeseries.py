@@ -1,6 +1,6 @@
 """
 =============================================================
-FASE 4 — MODUL 4: RNN, LSTM, GRU, TRANSFORMER
+FASE 4 - MODUL 4: RNN, LSTM, GRU, TRANSFORMER
 =============================================================
 Sequential data = data dengan order temporal:
 - Time series (sensors, stocks, weather)
@@ -9,10 +9,10 @@ Sequential data = data dengan order temporal:
 - Video (frames)
 
 Models untuk sequential data:
-1. RNN (Recurrent Neural Network) — vanishing gradient
-2. LSTM (Long Short-Term Memory) — solved vanishing
-3. GRU (Gated Recurrent Unit) — simplified LSTM
-4. Transformer (Attention) — state-of-the-art
+1. RNN (Recurrent Neural Network) - vanishing gradient
+2. LSTM (Long Short-Term Memory) - solved vanishing
+3. GRU (Gated Recurrent Unit) - simplified LSTM
+4. Transformer (Attention) - state-of-the-art
 
 Koneksi Teknik Elektro:
 - RNN = Infinite Impulse Response (IIR) filter
@@ -33,8 +33,18 @@ torch.manual_seed(42)
 
 
 # ===========================================================
-# 📖 BAGIAN 1: RNN Basics
+# BAGIAN 1: RNN Basics
 # ===========================================================
+# RNN (Recurrent Neural Network) memproses sequential data dengan
+# mempertahankan hidden state yang di-pass antar timestep.
+#
+# Vanilla RNN formula: h_t = tanh(W_ih @ x_t + W_hh @ h_{t-1} + b)
+# Masalah fundamental: vanishing/exploding gradients saat BPTT
+# - Weights < 1 -> gradient mengecil (vanishing)
+# - Weights > 1 -> gradient membesar (exploding) -> NaN
+# - Solusi: gradient clipping, LSTM/GRU
+#
+# Koneksi Teknik Elektro: RNN = IIR filter dengan nonlinear feedback
 class SimpleRNN(nn.Module):
     """
     Vanilla RNN implementation.
@@ -98,18 +108,29 @@ class SimpleRNN(nn.Module):
 
 
 # ===========================================================
-# 📖 BAGIAN 2: LSTM — Long Short-Term Memory
+# BAGIAN 2: LSTM - Long Short-Term Memory
 # ===========================================================
+# LSTM solves vanishing gradient problem dengan cell state (conveyor belt)
+# dan gating mechanisms.
+#
+# Intuitif LSTM:
+# - Forget gate: 'apakah kita lupakan informasi lama?'
+# - Input gate: 'apakah kita simpan informasi baru?'
+# - Cell state: conveyor belt yang membawa informasi sepanjang sequence
+# - Output gate: 'informasi mana yang kita outputkan?'
+#
+# Kenapa LSTM bekerja: cell state update adalah penjumlahan, bukan perkalian.
+# Gradient bisa flow langsung melalui cell state tanpa melewati activation.
 class SimpleLSTM(nn.Module):
     """
-    LSTM implementation — solves vanishing gradient problem.
+    LSTM implementation - solves vanishing gradient problem.
     
     LSTM Gates:
-    - Forget gate: f_t = σ(W_f · [h_{t-1}, x_t] + b_f)
-    - Input gate: i_t = σ(W_i · [h_{t-1}, x_t] + b_i)
-    - Candidate: c̃_t = tanh(W_c · [h_{t-1}, x_t] + b_c)
-    - Cell state: c_t = f_t * c_{t-1} + i_t * c̃_t
-    - Output gate: o_t = σ(W_o · [h_{t-1}, x_t] + b_o)
+    - Forget gate: f_t = sigma(W_f * [h_{t-1}, x_t] + b_f)
+    - Input gate: i_t = sigma(W_i * [h_{t-1}, x_t] + b_i)
+    - Candidate: c~_t = tanh(W_c * [h_{t-1}, x_t] + b_c)
+    - Cell state: c_t = f_t * c_{t-1} + i_t * c~_t
+    - Output gate: o_t = sigma(W_o * [h_{t-1}, x_t] + b_o)
     - Hidden state: h_t = o_t * tanh(c_t)
     
     Parameters:
@@ -169,7 +190,7 @@ class SimpleLSTM(nn.Module):
 
 
 # ===========================================================
-# 📖 BAGIAN 3: Time Series Prediction
+# BAGIAN 3: Time Series Prediction
 # ===========================================================
 def generate_synthetic_series(n_samples=1000, noise=0.1):
     """
@@ -234,14 +255,14 @@ print(f"Train shape: {X_train_t.shape}, Test shape: {X_test_t.shape}")
 
 
 # ===========================================================
-# 📖 BAGIAN 4: Training LSTM untuk Time Series
+# BAGIAN 4: Training LSTM untuk Time Series
 # ===========================================================
 class TimeSeriesLSTM(nn.Module):
     """
     LSTM untuk time series prediction.
     
     Architecture:
-    Input(seq_len, 1) → LSTM(32) → Dropout → FC(16) → FC(1)
+    Input(seq_len, 1) -> LSTM(32) -> Dropout -> FC(16) -> FC(1)
     
     Parameters:
     -----------
@@ -327,11 +348,11 @@ axes[2].set_xlabel('Time')
 plt.tight_layout()
 plt.savefig('01_rnn_timeseries.png', dpi=100, bbox_inches='tight')
 plt.close()
-print("📊 Saved: 01_rnn_timeseries.png")
+print("PLOT Saved: 01_rnn_timeseries.png")
 
 
 # ===========================================================
-# 📖 BAGIAN 5: Multi-Step Forecasting
+# BAGIAN 5: Multi-Step Forecasting
 # ===========================================================
 def multi_step_forecast(model, initial_sequence, n_steps):
     """
@@ -359,7 +380,7 @@ def multi_step_forecast(model, initial_sequence, n_steps):
     3. Gunakan sequence yang di-update untuk prediksi step 2
     4. Ulangi sampai n_steps
     
-    ⚠️ Error accumulates! Makin jauh forecast → makin tidak akurat.
+    PERINGATAN Error accumulates! Makin jauh forecast -> makin tidak akurat.
     
     Alternatif: direct multi-step (prediksi semua langsung)
     atau seq2seq models.
@@ -382,16 +403,30 @@ def multi_step_forecast(model, initial_sequence, n_steps):
 
 
 # ===========================================================
-# 📖 BAGIAN 6: Transformer untuk Time Series
+# BAGIAN 6: Transformer untuk Time Series
 # ===========================================================
+# Transformer adalah arsitektur attention-based yang menggantikan RNN/LSTM
+# di banyak NLP dan time series tasks.
+#
+# Key ideas:
+# - Self-attention: setiap timestep melihat semua timestep lain
+# - Multi-head attention: multiple views dari sequence (parallel)
+# - Positional encoding: inject order information
+# - Layer normalization: stabilize training
+#
+# Attention formula: Attention(Q,K,V) = softmax(QK^T / sqrt(d_k)) V
+# sqrt(d_k) scaling mencegah softmax menjadi terlalu sharp.
+#
+# Kelebihan vs RNN: parallel processing, long-range dependencies, interpretable
+# Kekurangan: quadratic complexity O(n^2), butuh lebih banyak data.
 class TimeSeriesTransformer(nn.Module):
     """
     Transformer untuk time series forecasting.
     
     Architecture:
-    Input → Linear Embedding → Positional Encoding
-          → Transformer Encoder (multi-head attention)
-          → FC → Output
+    Input -> Linear Embedding -> Positional Encoding
+          -> Transformer Encoder (multi-head attention)
+          -> FC -> Output
     
     Parameters:
     -----------
@@ -476,25 +511,25 @@ class PositionalEncoding(nn.Module):
 
 
 # ===========================================================
-# 🏋️ EXERCISE 14: Sequential Models Mastery
+# LATIHAN EXERCISE 14: Sequential Models Mastery
 # ===========================================================
 """
-🎯 Learning Objectives:
+TARGET Learning Objectives:
    - Membangun seq2seq model untuk multi-step forecasting
    - Mengimplementasikan attention mechanism
    - Membandingkan RNN, LSTM, GRU, Transformer
 
-📋 LANGKAH-LANGKAH:
+PANDUAN LANGKAH-LANGKAH:
 
 STEP 1: Implementasi GRU
-────────────────────────
+
 GRU = Gated Recurrent Unit (simplified LSTM)
 
    a) Gates:
-      - Reset gate: r_t = σ(W_r · [h_{t-1}, x_t])
-      - Update gate: z_t = σ(W_z · [h_{t-1}, x_t])
-      - Candidate: h̃_t = tanh(W · [r_t * h_{t-1}, x_t])
-      - Hidden: h_t = (1 - z_t) * h_{t-1} + z_t * h̃_t
+      - Reset gate: r_t = sigma(W_r * [h_{t-1}, x_t])
+      - Update gate: z_t = sigma(W_z * [h_{t-1}, x_t])
+      - Candidate: h~_t = tanh(W * [r_t * h_{t-1}, x_t])
+      - Hidden: h_t = (1 - z_t) * h_{t-1} + z_t * h~_t
       
    b) Bandingkan dengan LSTM:
       - GRU punya 2 gates vs LSTM 3 gates
@@ -505,14 +540,14 @@ GRU = Gated Recurrent Unit (simplified LSTM)
       - GRUCell manual
       - Bandingkan dengan nn.GRU output
       
-   💡 KENAPA GRU?
+   TIPS KENAPA GRU?
      - Lebih sederhana dari LSTM
      - Lebih cepat training
      - Cukup untuk banyak sequential tasks
 
 
 STEP 2: Seq2Seq untuk Multi-Step Forecasting
-────────────────────────────────────────────
+
    a) Architecture:
       - Encoder: LSTM/GRU yang process input sequence
       - Decoder: LSTM/GRU yang generate output sequence
@@ -531,16 +566,16 @@ STEP 2: Seq2Seq untuk Multi-Step Forecasting
       - RMSE per forecast horizon
       - Plot: true vs predicted untuk setiap horizon
       
-   💡 KENAPA seq2seq?
+   TIPS KENAPA seq2seq?
      - Directly predicts multiple steps
      - Tidak perlu recursive forecasting
      - Lebih stabil untuk long-term prediction
 
 
 STEP 3: Attention Mechanism
-───────────────────────────
+
    a) Implementasi scaled dot-product attention:
-      Attention(Q, K, V) = softmax(QK^T / √d_k) V
+      Attention(Q, K, V) = softmax(QK^T / sqrtd_k) V
       
    b) Self-attention untuk time series:
       - Q = K = V = hidden states dari encoder
@@ -552,14 +587,14 @@ STEP 3: Attention Mechanism
       - Identifikasi: timestep mana yang paling penting?
       - Apakah attention menangkap seasonal patterns?
       
-   💡 KENAPA attention?
+   TIPS KENAPA attention?
      - Model bisa fokus pada relevant timesteps
      - Interpretable: bisa lihat "what the model is looking at"
      - Menghindari bottleneck dari encoder final state
 
 
 STEP 4: Comprehensive Comparison
-─────────────────────────────────
+
    Bandingkan 4 arsitektur pada dataset yang sama:
    
    a) LSTM (baseline)
@@ -574,28 +609,28 @@ STEP 4: Comprehensive Comparison
    - Number of parameters
    - Memory usage
    
-   💡 Analisis:
+   TIPS Analisis:
      - Mana yang terbaik untuk short-term vs long-term?
      - Tradeoff accuracy vs efficiency?
      - Kapan menggunakan masing-masing?
 
 
-💡 HINTS:
+TIPS HINTS:
    - GRU equations lebih simple dari LSTM
    - Seq2seq: encoder_output, (hidden, cell) = encoder(input)
    - Attention: torch.bmm(Q, K.transpose(1, 2)) untuk batch matrix multiply
    - Scaled attention: divide by sqrt(d_k) untuk stability
    - Teacher forcing ratio: decrease dari 1.0 ke 0.0 selama training
 
-⚠️ COMMON MISTAKES:
-   - Teacher forcing tanpa schedule → model tidak belajar
+PERINGATAN COMMON MISTAKES:
+   - Teacher forcing tanpa schedule -> model tidak belajar
      inference (exposure bias)
-   - Attention tanpa scaling → softmax terlalu sharp
+   - Attention tanpa scaling -> softmax terlalu sharp
    - Lupa positional encoding di transformer
-   - Seq2seq tanpa EOS token → infinite generation
-   - Gradient clipping tidak di-LSTM → exploding gradients
+   - Seq2seq tanpa EOS token -> infinite generation
+   - Gradient clipping tidak di-LSTM -> exploding gradients
 
-🎯 EXPECTED OUTPUT:
+TARGET EXPECTED OUTPUT:
    - GRU implementation matching PyTorch nn.GRU
    - Seq2seq model dengan multi-step forecasting
    - Attention visualization heatmap
@@ -604,18 +639,18 @@ STEP 4: Comprehensive Comparison
 
 
 # ===========================================================
-# 🔥 CHALLENGE: Transformer untuk Fault Prediction
+# CHALLENGE CHALLENGE: Transformer untuk Fault Prediction
 # ===========================================================
 """
-🎯 Learning Objectives:
+TARGET Learning Objectives:
    - Mengaplikasikan transformer ke real-world industrial problem
    - Menggabungkan multiple sensor streams
    - Membangun early warning system untuk predictive maintenance
 
-📋 LANGKAH-LANGKAH:
+PANDUAN LANGKAH-LANGKAH:
 
 STEP 1: Generate Multi-Sensor Dataset
-─────────────────────────────────────
+
    Konteks: Motor bearing monitoring dengan 3 sensors:
    
    a) Sensors:
@@ -625,7 +660,7 @@ STEP 1: Generate Multi-Sensor Dataset
       
    b) Normal operation (80%):
       - Vibration: white noise + 60Hz hum (minimal)
-      - Temperature: 40°C ± 2°C (slow drift)
+      - Temperature: 40 degC +/- 2 degC (slow drift)
       - Current: sinusoidal 50Hz, 5A RMS
       
    c) Degrading (15%):
@@ -635,7 +670,7 @@ STEP 1: Generate Multi-Sensor Dataset
       
    d) Failing (5%):
       - Vibration: high amplitude, impulsive
-      - Temperature: > 70°C
+      - Temperature: > 70 degC
       - Current: significant imbalance, harmonics
       
    e) Label: 0=normal, 1=degrading, 2=failing
@@ -644,7 +679,7 @@ STEP 1: Generate Multi-Sensor Dataset
 
 
 STEP 2: Preprocessing
-─────────────────────
+
    a) Normalisasi per sensor:
       - Z-score: (x - mean) / std per sensor
       - Simpan statistics untuk inference
@@ -655,7 +690,7 @@ STEP 2: Preprocessing
       
    c) Data augmentation:
       - Add sensor noise (SNR 20-40 dB)
-      - Time shift (±10 timesteps)
+      - Time shift (+/-10 timesteps)
       - Random sensor dropout (simulate sensor failure)
       
    d) Class balancing:
@@ -664,7 +699,7 @@ STEP 2: Preprocessing
 
 
 STEP 3: Transformer Architecture
-────────────────────────────────
+
    a) Input embedding:
       - Project 3 sensors ke d_model dimension
       - Add positional encoding
@@ -688,7 +723,7 @@ STEP 3: Transformer Architecture
 
 
 STEP 4: Training Strategy
-─────────────────────────
+
    a) Loss function:
       - Weighted cross-entropy (karena class imbalance)
       - Focal loss (fokus pada hard examples)
@@ -705,7 +740,7 @@ STEP 4: Training Strategy
 
 
 STEP 5: Evaluation & Deployment
-───────────────────────────────
+
    a) Metrics:
       - Overall accuracy
       - Precision/recall/F1 per class
@@ -728,24 +763,24 @@ STEP 5: Evaluation & Deployment
       - Sensor failure handling
 
 
-💡 HINTS:
+TIPS HINTS:
    - Bearing fault frequencies:
-     BPFO = (n/2)*fr*(1-d/D*cos(β))
-     BPFI = (n/2)*fr*(1+d/D*cos(β))
-     BSF = (D/2d)*fr*(1-(d/D*cos(β))²)
+     BPFO = (n/2)*fr*(1-d/D*cos(beta))
+     BPFI = (n/2)*fr*(1+d/D*cos(beta))
+     BSF = (D/2d)*fr*(1-(d/D*cos(beta))**2)
    - Weighted loss: weights = 1/class_frequency
-   - Focal loss: -α*(1-p)^γ * log(p)
+   - Focal loss: -alpha*(1-p)^gamma * log(p)
    - Label smoothing: target = 0.9 (bukan 1.0)
    - Gradient clipping: torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
 
-⚠️ COMMON MISTAKES:
+PERINGATAN COMMON MISTAKES:
    - Data leakage: normalize sebelum split
    - Class imbalance tanpa weighting
    - Attention weights tidak di-visualisasi
    - Model terlalu besar untuk real-time inference
    - Tidak handle missing sensor data
 
-🎯 EXPECTED OUTPUT:
+TARGET EXPECTED OUTPUT:
    - Multi-sensor transformer classifier
    - Accuracy > 90% per class
    - Attention analysis yang informatif
@@ -753,18 +788,18 @@ STEP 5: Evaluation & Deployment
    - Deployment-ready model (TorchScript atau ONNX)
 
 Ini adalah aplikasi end-to-end deep learning untuk
-predictive maintenance — skill yang sangat dicari di industri!
+predictive maintenance - skill yang sangat dicari di industri!
 """
 
 print("\n" + "="*50)
-print("🎉 FASE 4 SELESAI!")
+print("SELAMAT FASE 4 SELESAI!")
 print("="*50)
 print("""
 Kamu sekarang bisa:
-✅ Neural network dari scratch (NumPy)
-✅ PyTorch fundamentals (tensors, autograd, nn.Module)
-✅ CNN untuk images dan signals
-✅ RNN/LSTM/GRU/Transformer untuk time series
+OK Neural network dari scratch (NumPy)
+OK PyTorch fundamentals (tensors, autograd, nn.Module)
+OK CNN untuk images dan signals
+OK RNN/LSTM/GRU/Transformer untuk time series
 
 Sebelum lanjut:
 1. Selesaikan Project 3: Computer Vision

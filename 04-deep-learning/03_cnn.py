@@ -1,6 +1,6 @@
 """
 =============================================================
-FASE 4 — MODUL 3: CONVOLUTIONAL NEURAL NETWORKS (CNN)
+FASE 4 - MODUL 3: CONVOLUTIONAL NEURAL NETWORKS (CNN)
 =============================================================
 CNN = model khusus untuk data yang punya structure spasial:
 - Images (2D)
@@ -33,8 +33,37 @@ torch.manual_seed(42)
 
 
 # ===========================================================
-# 📖 BAGIAN 1: 2D Convolution dari Scratch
+# BAGIAN 1: 2D Convolution dari Scratch
 # ===========================================================
+# Convolution adalah operasi matematika yang menggeser kernel/filter
+# melintasi input dan menghitung dot product di setiap posisi.
+#
+# Matematika 2D Convolution:
+# output[i, j] = Sum_m Sum_n input[i*stride + m, j*stride + n] * kernel[m, n]
+#
+# Parameter:
+# - kernel_size: ukuran filter (kH x kW).
+# - stride: step size geser filter. Stride > 1 = downsampling.
+# - padding: zero-padding di sekitar input.
+#   padding = (kernel_size - 1) / 2 menjaga ukuran output = input (same convolution).
+#
+# Output size formula:
+# H_out = floor((H_in + 2*padding - kernel_size) / stride) + 1
+#
+# Kenapa convolution penting?
+# - Local connectivity: setiap neuron hanya terhubung ke region kecil.
+#   Ini mengurangi parameter secara drastis dibanding fully connected.
+# - Weight sharing: filter yang sama dipakai di semua lokasi.
+#   Ini membuat CNN translation invariant (objek bisa dideteksi
+#   di posisi manapun).
+# - Hierarchical features: layer awal deteksi edges, layer tengah
+#   textures, layer akhir objek/parts.
+#
+# Koneksi Teknik Elektro:
+# - 2D Convolution = 2D FIR filtering
+# - Kernel = impulse response
+# - Stride = downsampling factor
+# - Padding = zero-padding untuk maintain size
 
 def conv2d_scratch(input, kernel, stride=1, padding=0):
     """
@@ -92,6 +121,8 @@ def conv2d_scratch(input, kernel, stride=1, padding=0):
 def visualize_convolution():
     """Visualisasi proses convolution pada edge detection."""
     # Sobel edge detection kernel
+    # Sobel X mendeteksi perubahan intensitas horizontal (vertical edges).
+    # Kernel ini adalah high-pass filter di arah horizontal.
     sobel_x = np.array([
         [-1, 0, 1],
         [-2, 0, 2],
@@ -120,18 +151,34 @@ def visualize_convolution():
     plt.tight_layout()
     plt.savefig('01_convolution_visualization.png', dpi=100, bbox_inches='tight')
     plt.close()
-    print("📊 Saved: 01_convolution_visualization.png")
+    print("OK Saved: 01_convolution_visualization.png")
 
 visualize_convolution()
 
 
 # ===========================================================
-# 📖 BAGIAN 2: 1D Convolution untuk Time Series
+# BAGIAN 2: 1D Convolution untuk Time Series
 # ===========================================================
+# 1D convolution identik dengan FIR filtering di DSP!
+# Sangat relevan untuk EE: signal classification, fault detection, dll.
+#
+# Matematika 1D Convolution:
+# output[i] = Sum_k input[i*stride + k] * kernel[k]
+#
+# Kenapa 1D CNN untuk time series?
+# - Mengekstrak local patterns tanpa memerlukan manual feature engineering.
+# - Receptive field tumbuh seiring kedalaman layer.
+# - Efisien: weight sharing mengurangi parameter.
+#
+# Koneksi Teknik Elektro:
+# - 1D CNN = adaptive FIR filter bank
+# - Kernel = filter coefficients yang di-learn
+# - Stride = downsampling factor
+# - Feature maps = filtered signals
 
 def conv1d_scratch(signal, kernel, stride=1):
     """
-    1D convolution — relevan untuk signal processing!
+    1D convolution - relevan untuk signal processing!
     
     Parameters:
     -----------
@@ -174,6 +221,8 @@ t = np.arange(1000)
 signal = np.sin(2 * np.pi * 5 * t / 1000) + 0.5 * np.sin(2 * np.pi * 50 * t / 1000)
 
 # Moving average = low-pass filter
+# Kernel rata-rata menghilangkan high-frequency noise (50 Hz)
+# sambil mempertahankan low-frequency signal (5 Hz).
 kernel_lowpass = np.ones(20) / 20
 filtered = conv1d_scratch(signal, kernel_lowpass)
 
@@ -191,20 +240,52 @@ axes[1].set_xlabel('Sample')
 plt.tight_layout()
 plt.savefig('02_1d_convolution.png', dpi=100, bbox_inches='tight')
 plt.close()
-print("📊 Saved: 02_1d_convolution.png")
+print("OK Saved: 02_1d_convolution.png")
 
 
 # ===========================================================
-# 📖 BAGIAN 3: CNN untuk MNIST dengan PyTorch
+# BAGIAN 3: CNN untuk MNIST dengan PyTorch
 # ===========================================================
+# Arsitektur CNN klasik untuk image classification:
+# Conv -> ReLU -> Pool -> Conv -> ReLU -> Pool -> FC -> Output
+#
+# nn.Conv2d:
+# - in_channels: jumlah channel input (1 untuk grayscale, 3 untuk RGB).
+# - out_channels: jumlah filter/kernel. Setiap filter menghasilkan 1 feature map.
+# - kernel_size: ukuran filter (3x3, 5x5, dll).
+# - padding: zero-padding (1 untuk kernel 3x3 menjaga ukuran).
+# - stride: step geser (default 1).
+#
+# nn.MaxPool2d:
+# - Mengurangi spatial dimensions dengan mengambil nilai maksimum.
+# - Translation invariance: posisi objek sedikit bergeser tidak mempengaruhi output.
+# - Mengurangi computation di layer berikutnya.
+# - PERINGATAN: aggressive pooling bisa menghilangkan informasi penting.
+#
+# nn.BatchNorm2d:
+# - Normalize activations per channel: (x - mean) / sqrt(var + eps).
+# - Stabilizes training, mempercepat convergence.
+# - Memungkinkan learning rate lebih tinggi.
+# - PERINGATAN: gunakan .eval() saat inference! Batch stats vs running stats.
+#
+# nn.Dropout:
+# - Randomly zero out p% neurons saat training.
+# - Mencegah co-adaptation (neuron terlalu bergantung satu sama lain).
+# - Saat inference: dropout tidak aktif (atau scale by 1/(1-p)).
+#
+# Koneksi Teknik Elektro:
+# - Conv = matched filtering untuk pattern recognition
+# - Pooling = decimation dengan max operation
+# - Feature maps = spectrogram-like representation
+
 class MNISTCNN(nn.Module):
     """
     CNN untuk klasifikasi MNIST.
     
     Architecture:
-    Input(1x28x28) → Conv(32, 3x3) → ReLU → MaxPool(2)
-                   → Conv(64, 3x3) → ReLU → MaxPool(2)
-                   → Flatten(7x7x64) → FC(128) → Dropout(0.5) → FC(10)
+    Input(1x28x28) -> Conv(32, 3x3) -> ReLU -> MaxPool(2)
+                   -> Conv(64, 3x3) -> ReLU -> MaxPool(2)
+                   -> Flatten(7x7x64) -> FC(128) -> Dropout(0.5) -> FC(10)
     
     Parameters:
     -----------
@@ -235,9 +316,9 @@ class MNISTCNN(nn.Module):
         self.relu = nn.ReLU()
         
     def forward(self, x):
-        # Layer 1: 28x28 → 28x28 → 14x14
+        # Layer 1: 28x28 -> 28x28 (padding=1) -> 14x14 (pool)
         x = self.pool(self.relu(self.conv1(x)))
-        # Layer 2: 14x14 → 14x14 → 7x7
+        # Layer 2: 14x14 -> 14x14 (padding=1) -> 7x7 (pool)
         x = self.pool(self.relu(self.conv2(x)))
         # Flatten
         x = x.view(x.size(0), -1)
@@ -254,6 +335,9 @@ from torchvision import datasets, transforms
 def train_mnist_cnn(epochs=5):
     """Train MNIST CNN dan visualisasi hasil."""
     
+    # Normalisasi MNIST: mean=0.1307, std=0.3081 (precomputed untuk dataset MNIST)
+    # Normalisasi membuat input zero-mean dan unit variance,
+    # membantu training convergence.
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,))
@@ -321,7 +405,7 @@ def train_mnist_cnn(epochs=5):
     plt.tight_layout()
     plt.savefig('03_mnist_cnn_training.png', dpi=100, bbox_inches='tight')
     plt.close()
-    print("📊 Saved: 03_mnist_cnn_training.png")
+    print("OK Saved: 03_mnist_cnn_training.png")
     
     return model
 
@@ -330,8 +414,23 @@ def train_mnist_cnn(epochs=5):
 
 
 # ===========================================================
-# 📖 BAGIAN 4: Visualisasi Feature Maps
+# BAGIAN 4: Visualisasi Feature Maps
 # ===========================================================
+# Feature maps menunjukkan "apa yang dilihat" CNN di setiap layer.
+# Layer awal: edge detectors, corners
+# Layer tengah: textures, patterns
+# Layer akhir: object parts, semantic features
+#
+# Hook-based extraction:
+# - PyTorch menyediakan forward hooks untuk capture intermediate outputs.
+# - Hook = function yang dipanggil setelah forward pass suatu layer.
+# - Berguna untuk debugging, interpretability, dan feature extraction.
+#
+# Koneksi Teknik Elektro:
+# - Mirip dengan spectrogram yang menunjukkan
+#   energy di setiap frequency band
+# - Feature maps = spatial-frequency representation
+
 def visualize_feature_maps(model, sample_image):
     """
     Visualisasi feature maps dari CNN.
@@ -391,12 +490,34 @@ def visualize_feature_maps(model, sample_image):
     plt.tight_layout()
     plt.savefig('04_feature_maps.png', dpi=100, bbox_inches='tight')
     plt.close()
-    print("📊 Saved: 04_feature_maps.png")
+    print("OK Saved: 04_feature_maps.png")
 
 
 # ===========================================================
-# 📖 BAGIAN 5: 1D CNN untuk Signal Classification
+# BAGIAN 5: 1D CNN untuk Signal Classification
 # ===========================================================
+# 1D CNN sangat powerful untuk time series classification.
+# Aplikasi EE: fault detection, power quality, ECG, speech.
+#
+# Arsitektur 1D CNN:
+# - Kernel sizes decreasing: 7 -> 5 -> 3.
+#   Layer awal dengan kernel besar menangkap low-frequency / long-range patterns.
+#   Layer akhir dengan kernel kecil menangkap detail local.
+# - Pooling: reduce sequence length, increase receptive field.
+# - Global Average Pooling: menghilangkan kebutuhan flatten fixed size.
+#   Mengurangi parameter dan meningkatkan generalisasi.
+#
+# Receptive Field:
+# - RF menentukan seberapa jauh input yang bisa "dilihat" oleh neuron.
+# - RF bertambah dengan depth dan kernel size.
+# - Untuk signal 1s @ 1kHz, RF harus cukup besar untuk menangkap
+#   siklus lengkap (misal 20ms = 20 samples untuk 50Hz).
+#
+# Koneksi Teknik Elektro:
+# - Conv1D = FIR filter bank
+# - Kernel size 7 ~ analyze 7-sample window
+# - Receptive field grows dengan depth (seperti multi-resolution analysis)
+
 class SignalCNN1D(nn.Module):
     """
     1D CNN untuk klasifikasi sinyal time series.
@@ -408,10 +529,10 @@ class SignalCNN1D(nn.Module):
     - Speech recognition
     
     Architecture:
-    Input(1xN) → Conv1(32, kernel=7) → ReLU → MaxPool(4)
-               → Conv1(64, kernel=5) → ReLU → MaxPool(4)
-               → Conv1(128, kernel=3) → ReLU → GlobalAvgPool
-               → FC(64) → FC(n_classes)
+    Input(1xN) -> Conv1(32, kernel=7) -> ReLU -> MaxPool(4)
+               -> Conv1(64, kernel=5) -> ReLU -> MaxPool(4)
+               -> Conv1(128, kernel=3) -> ReLU -> GlobalAvgPool
+               -> FC(64) -> FC(n_classes)
     
     Parameters:
     -----------
@@ -422,14 +543,14 @@ class SignalCNN1D(nn.Module):
         
     Notes:
     ------
-    - Kernel sizes decreasing: large → medium → small
+    - Kernel sizes decreasing: large -> medium -> small
       (capture multi-scale patterns)
     - Global Average Pooling: reduce parameters, improve generalization
     - Dilated convolution: increase receptive field tanpa increasing params
     
     Koneksi Teknik Elektro:
     - Conv1D = FIR filter bank
-    - Kernel size 7 ≈ analyze 7-sample window
+    - Kernel size 7 ~ analyze 7-sample window
     - Receptive field grows dengan depth (seperti multi-resolution analysis)
     """
     
@@ -458,25 +579,25 @@ class SignalCNN1D(nn.Module):
 
 
 # ===========================================================
-# 🏋️ EXERCISE 13: CNN Mastery
+# LATIHAN 13: CNN Mastery
 # ===========================================================
 """
-🎯 Learning Objectives:
+TARGET Learning Objectives:
    - Memahami receptive field dan dilated convolution
    - Mengimplementasikan residual connections (ResNet)
    - Membangun CNN untuk domain-specific task
 
-📋 LANGKAH-LANGKAH:
+PANDUAN LANGKAH-LANGKAH:
 
 STEP 1: Receptive Field Analysis
-────────────────────────────────
+--------------------------------
    a) Definisi: receptive field = ukuran area input yang
       mempengaruhi satu neuron di layer tersebut.
       
    b) Hitung receptive field untuk:
-      - Conv(kernel=3, stride=1) → RF = 3
-      - Conv(3) → MaxPool(2) → Conv(3) → RF = ?
-      - Conv(5, dilation=2) → RF = ?
+      - Conv(kernel=3, stride=1) -> RF = 3
+      - Conv(3) -> MaxPool(2) -> Conv(3) -> RF = ?
+      - Conv(5, dilation=2) -> RF = ?
       
    c) Formula:
       RF_out = RF_in + (kernel_size - 1) * stride * dilation
@@ -484,44 +605,44 @@ STEP 1: Receptive Field Analysis
    d) Buat fungsi calculate_receptive_field(layers) yang
       menghitung RF untuk sequence of layers.
       
-   💡 KENAPA penting?
+   TIPS KENAPA penting?
      - RF menentukan ukuran pattern yang bisa dideteksi
-     - Small RF → small patterns (edges, textures)
-     - Large RF → large patterns (objects, context)
+     - Small RF -> small patterns (edges, textures)
+     - Large RF -> large patterns (objects, context)
      - Untuk time series: RF menentukan durasi event yang terdeteksi
 
 
 STEP 2: Implementasi Dilated Convolution
-────────────────────────────────────────
+----------------------------------------
    a) Conv1d dengan dilation > 1:
       - Dilation = gap antara taps
       - Dilation=2: taps di [0, 2, 4] bukan [0, 1, 2]
       
    b) Buat class DilatedConvBlock:
       - Conv1d dengan increasing dilation
-      - DilatedConv → BatchNorm → ReLU
+      - DilatedConv -> BatchNorm -> ReLU
       
    c) Bandingkan:
       - Dilated Conv: RF besar tanpa parameter banyak
       - Standard Conv: RF kecil atau parameter banyak
       - Visualisasi: receptive field coverage
       
-   💡 KENAPA dilated conv?
+   TIPS KENAPA dilated conv?
      - Multi-scale analysis tanpa pooling
      - Preservasi resolution (penting untuk segmentation)
      - Efisien: parameter sama tapi RF lebih besar
 
 
 STEP 3: Implementasi Residual Block (ResNet)
-────────────────────────────────────────────
+--------------------------------------------
    a) BasicBlock:
-      - Conv → BN → ReLU → Conv → BN
+      - Conv -> BN -> ReLU -> Conv -> BN
       - Skip connection: input + output
       - ReLU setelah addition
       
    b) BottleneckBlock:
-      - Conv(1x1) → Conv(3x3) → Conv(1x1)
-      - Reduce → Process → Restore channels
+      - Conv(1x1) -> Conv(3x3) -> Conv(1x1)
+      - Reduce -> Process -> Restore channels
       - Lebih efisien untuk deep networks
       
    c) Visualisasi gradient flow:
@@ -529,14 +650,14 @@ STEP 3: Implementasi Residual Block (ResNet)
       - Tanpa skip: gradient harus melewati banyak layers
       - Plot: gradient magnitude per layer
       
-   💡 KENAPA residual connections?
+   TIPS KENAPA residual connections?
      - Memungkinkan training networks yang sangat deep (100+ layers)
      - Mitigasi vanishing gradient
      - Mirip dengan feedback control systems
 
 
 STEP 4: Domain-Specific CNN
-───────────────────────────
+---------------------------
    Konteks: Bearing Fault Detection dari Vibration Signals
    
    a) Dataset: synthetic bearing vibration
@@ -560,20 +681,20 @@ STEP 4: Domain-Specific CNN
       - Robustness ke noise
 
 
-💡 HINTS:
-   - Receptive field: RF = 1 + Σ((k_i - 1) * Π s_j)
+TIPS HINTS:
+   - Receptive field: RF = 1 + Sum((k_i - 1) * Product s_j)
    - Dilated conv: torch.nn.Conv1d(..., dilation=d)
    - Residual: F(x) + x (bisa pakai F.conv1d)
-   - Untuk bearing: fault frequencies = (n/2) * fr * (1 ± d/D * cos(β))
+   - Untuk bearing: fault frequencies = (n/2) * fr * (1 +/- d/D * cos(beta))
 
-⚠️ COMMON MISTAKES:
+PERINGATAN COMMON MISTAKES:
    - Output size tidak sesuai karena padding salah
    - Skip connection dimension mismatch
    - Dilation tidak compatible dengan kernel size
    - BatchNorm di test tanpa eval()
-   - Terlalu aggressive pooling → information loss
+   - Terlalu aggressive pooling -> information loss
 
-🎯 EXPECTED OUTPUT:
+TARGET EXPECTED OUTPUT:
    - Receptive field calculator
    - Dilated conv implementation
    - ResNet block implementation
@@ -583,18 +704,18 @@ STEP 4: Domain-Specific CNN
 
 
 # ===========================================================
-# 🔥 CHALLENGE: CNN untuk Power Quality Classification
+# CHALLENGE: CNN untuk Power Quality Classification
 # ===========================================================
 """
-🎯 Learning Objectives:
+TARGET Learning Objectives:
    - Mengaplikasikan CNN ke real-world power systems problem
    - Menggabungkan time domain dan frequency domain
    - Membangun production-ready signal classification pipeline
 
-📋 LANGKAH-LANGKAH:
+PANDUAN LANGKAH-LANGKAH:
 
 STEP 1: Generate Power Quality Dataset
-───────────────────────────────────────
+---------------------------------------
    Simulasi 4 kelas gangguan kualitas daya:
    
    a) Normal: sinusoidal murni 50Hz, THD < 3%
@@ -607,31 +728,31 @@ STEP 1: Generate Power Quality Dataset
    - Window: 10 cycles = 640 samples
    - Dataset: 1000 windows per class
    
-   💡 KENAPA kelas ini?
+   TIPS KENAPA kelas ini?
      - Very common di power systems
      - Setiap kelas punya signature yang distinct
      - Penting untuk protective relaying dan monitoring
 
 
 STEP 2: Preprocessing
-─────────────────────
+---------------------
    a) Normalisasi: scale ke [-1, 1]
    b) Optional: convert ke frequency domain (FFT)
    c) Data augmentation:
       - Add noise (SNR 30-40 dB)
-      - Time shift (±10 samples)
-      - Amplitude scaling (±5%)
+      - Time shift (+/-10 samples)
+      - Amplitude scaling (+/-5%)
       
    d) Train/val/test split: 70/15/15
    
-   💡 KENAPA augmentation?
+   TIPS KENAPA augmentation?
      - Simulasi variasi real-world
      - Mencegah overfitting
      - Memperkuat generalization
 
 
 STEP 3: Architecture Design
-───────────────────────────
+---------------------------
    Desain CNN yang optimal untuk power signals:
    
    a) Raw signal path:
@@ -640,7 +761,7 @@ STEP 3: Architecture Design
       - Dilated conv untuk long-range dependencies
       
    b) Frequency domain path (optional):
-      - FFT input → Conv1D pada spectrum
+      - FFT input -> Conv1D pada spectrum
       - Focus pada harmonic content
       
    c) Fusion:
@@ -654,7 +775,7 @@ STEP 3: Architecture Design
 
 
 STEP 4: Training & Evaluation
-─────────────────────────────
+-----------------------------
    a) Training:
       - Loss: CrossEntropyLoss dengan class weights
       - Optimizer: AdamW (Adam + weight decay)
@@ -674,7 +795,7 @@ STEP 4: Training & Evaluation
 
 
 STEP 5: Model Interpretability
-──────────────────────────────
+------------------------------
    a) Feature map visualization:
       - Plot feature maps dari setiap conv layer
       - Identifikasi: apakah model menangkap fault signatures?
@@ -689,29 +810,29 @@ STEP 5: Model Interpretability
       - Identifikasi critical time regions
 
 
-💡 HINTS:
+TIPS HINTS:
    - Voltage sag/swell: abrupt changes di envelope
    - Harmonics: peaks di frequency domain
    - Untuk FFT path: window input dengan Hanning window
    - Class weights: inverse frequency untuk imbalance
    - AdamW: torch.optim.AdamW(params, lr, weight_decay)
 
-⚠️ COMMON MISTAKES:
+PERINGATAN COMMON MISTAKES:
    - Training pada augmented data, test pada original
    - Window boundary effects (Gibbs phenomenon)
    - Class imbalance tanpa weighting
-   - FFT phase information tidak relevant → use magnitude only
+   - FFT phase information tidak relevant -> use magnitude only
    - Model terlalu shallow untuk capture fault dynamics
 
-🎯 EXPECTED OUTPUT:
+TARGET EXPECTED OUTPUT:
    - Power quality classifier dengan accuracy > 95%
    - Confusion matrix yang clean (minimal misclassification)
    - Feature maps yang menunjukkan fault detection
-   - Production-ready pipeline: preprocess → model → predict
+   - Production-ready pipeline: preprocess -> model -> predict
 
 Ini adalah aplikasi langsung dari deep learning ke power systems!
 """
 
 print("\n" + "="*50)
-print("✅ Modul selesai! Lanjut ke: 04-deep-learning/04_rnn_timeseries.py")
+print("OK Modul selesai! Lanjut ke: 04-deep-learning/04_rnn_timeseries.py")
 print("="*50)

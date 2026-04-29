@@ -1,6 +1,6 @@
 """
 =============================================================
-FASE 0: SETUP ENVIRONMENT — ML Engineer Track
+FASE 0: SETUP ENVIRONMENT - ML Engineer Track
 =============================================================
 Jalankan file ini untuk memastikan semua tools siap.
 
@@ -14,10 +14,21 @@ Kita akan pakai:
 - FastAPI, Docker (deployment)
 - VS Code Interactive / Jupyter (recommended)
 
-Untuk ML Engineer track, MLOps tools adalah WAJIB — leverage
+Untuk ML Engineer track, MLOps tools adalah WAJIB - leverage
 pengalaman backend kamu!
-=============================================================
-"""
+
+DETAIL PACKAGE:
+- NumPy: operasi array numerik, fondasi dari scientific computing di Python.
+- Pandas: manipulasi dan analisis data tabular.
+- Matplotlib/Seaborn: visualisasi data dan model performance.
+- scikit-learn: classical ML algorithms dan utilities.
+- XGBoost/LightGBM: gradient boosting frameworks, state-of-the-art untuk tabular data.
+- PyTorch: deep learning framework dengan dynamic computation graph.
+- Transformers: library dari HuggingFace untuk NLP dan LLM.
+- MLflow: experiment tracking dan model registry.
+- FastAPI: modern web framework untuk building APIs dengan Python.
+- Docker: containerization untuk consistent deployment.
+============================================================="""
 
 import sys
 import subprocess
@@ -44,13 +55,15 @@ def check_python():
     - sys.version_info mengembalikan named tuple (major, minor, micro, releaselevel, serial)
     - Python 3.10 dipilih karena banyak fitur modern seperti pattern matching
       dan improved type hints yang sering dipakai di ML libraries
+    - Python 3.11+ punya performance improvements yang signifikan (10-60% faster)
+    - Beberapa library seperti PyTorch mungkin belum support Python 3.12+
     """
     v = sys.version_info
     print(f"Python version: {v.major}.{v.minor}.{v.micro}")
     if v.major < 3 or (v.major == 3 and v.minor < 10):
-        print("⚠️  Recommended: Python 3.10+")
+        print("PERINGATAN  Recommended: Python 3.10+")
     else:
-        print("✅ Python version OK")
+        print("OK Python version OK")
 
 
 def check_package(name, import_name=None, optional=False):
@@ -69,7 +82,7 @@ def check_package(name, import_name=None, optional=False):
         
     import_name : str, optional
         Nama module yang digunakan untuk import. Biasanya sama dengan 'name',
-        tapi bisa berbeda (contoh: "scikit-learn" → import "sklearn").
+        tapi bisa berbeda (contoh: "scikit-learn" -> import "sklearn").
         Default None, yang berarti menggunakan 'name' sebagai import_name.
         
     optional : bool, optional
@@ -90,18 +103,20 @@ def check_package(name, import_name=None, optional=False):
       dari module. Jika tidak ada, menggunakan 'unknown' sebagai fallback.
     - Koneksi ke Teknik Elektro: mirip dengan pengecekan dependency 
       di embedded systems sebelum flashing firmware.
+    - Beberapa packages tidak punya __version__ attribute (e.g., 'sklearn').
+      Untuk sklearn, gunakan sklearn.__version__ setelah import.
     """
     if import_name is None:
         import_name = name
     try:
         mod = __import__(import_name)
         version = getattr(mod, '__version__', 'unknown')
-        tag = "✅" if not optional else "🟡"
+        tag = "OK" if not optional else "O"
         print(f"{tag} {name} ({version})" + (" [optional]" if optional else ""))
         return True
     except ImportError:
-        tag = "❌" if not optional else "⚪"
-        print(f"{tag} {name} — belum terinstall" + (" [optional]" if optional else ""))
+        tag = "X" if not optional else "O"
+        print(f"{tag} {name} - belum terinstall" + (" [optional]" if optional else ""))
         return False
 
 
@@ -115,7 +130,7 @@ def main():
     - Core Data Science (Wajib)
     - Deep Learning (Wajib)
     - NLP & LLM (Wajib untuk AI Engineer)
-    - MLOps & Production (Wajib — leverage backend exp!)
+    - MLOps & Production (Wajib - leverage backend exp!)
     - Data Validation & Monitoring (Recommended)
     - LLM Engineering (Recommended)
     - Interactive Environment (Optional)
@@ -135,9 +150,11 @@ def main():
     - Package yang missing dicatat dalam list untuk summary akhir
     - all_missing menggabungkan semua package yang belum terinstall
       dari semua kategori wajib
+    - Untuk PyTorch, cek https://pytorch.org/get-started/locally/
+      untuk install command yang sesuai dengan CUDA version
     """
     print("=" * 60)
-    print("🔍 Checking Environment — ML Engineer Track")
+    print("CHECK Checking Environment - ML Engineer Track")
     print("=" * 60)
 
     # Step 1: Cek versi Python terlebih dahulu
@@ -145,11 +162,14 @@ def main():
     print()
 
     # ===========================================================
-    # 📦 CORE DATA SCIENCE (Wajib)
+    # CORE DATA SCIENCE (Wajib)
     # ===========================================================
     # Package ini adalah fondasi dari semua data science & ML di Python.
     # Tanpa package ini, hampir tidak mungkin melakukan ML di Python.
-    print("📦 CORE DATA SCIENCE (Wajib)")
+    # NumPy dan Pandas adalah struktur data fundamental.
+    # Matplotlib/Seaborn untuk visualisasi model performance.
+    # scikit-learn untuk classical ML algorithms.
+    print("PANDUAN CORE DATA SCIENCE (Wajib)")
     print("-" * 40)
     core_packages = [
         ("numpy", "numpy"),
@@ -168,11 +188,12 @@ def main():
     print()
 
     # ===========================================================
-    # 📦 DEEP LEARNING (Wajib)
+    # DEEP LEARNING (Wajib)
     # ===========================================================
     # PyTorch adalah framework deep learning yang paling populer di riset
     # dan semakin banyak dipakai di industri.
-    print("📦 DEEP LEARNING (Wajib)")
+    # torchvision dan torchaudio untuk computer vision dan audio tasks.
+    print("PANDUAN DEEP LEARNING (Wajib)")
     print("-" * 40)
     dl_packages = [
         ("torch (PyTorch)", "torch"),
@@ -187,11 +208,12 @@ def main():
     print()
 
     # ===========================================================
-    # 📦 NLP & LLM (Wajib untuk AI Engineer track)
+    # NLP & LLM (Wajib untuk AI Engineer track)
     # ===========================================================
     # Transformers dan datasets dari Hugging Face adalah tools utama
     # untuk NLP modern dan LLM engineering.
-    print("📦 NLP & LLM (Wajib untuk AI Engineer)")
+    # Tokenizers untuk text preprocessing.
+    print("PANDUAN NLP & LLM (Wajib untuk AI Engineer)")
     print("-" * 40)
     nlp_packages = [
         ("transformers", "transformers"),
@@ -206,11 +228,14 @@ def main():
     print()
 
     # ===========================================================
-    # 📦 MLOps & PRODUCTION (Wajib — Ini kekuatanmu!)
+    # MLOps & PRODUCTION (Wajib - Ini kekuatanmu!)
     # ===========================================================
     # Package ini adalah yang membedakan ML Engineer dari Data Scientist.
     # Background backend kamu sangat membantu di sini!
-    print("📦 MLOps & PRODUCTION (Wajib — Ini kekuatanmu!)")
+    # MLflow untuk experiment tracking.
+    # FastAPI dan Uvicorn untuk API serving.
+    # Streamlit/Gradio untuk demo applications.
+    print("PANDUAN MLOps & PRODUCTION (Wajib - Ini kekuatanmu!)")
     print("-" * 40)
     mlops_packages = [
         ("mlflow", "mlflow"),
@@ -230,10 +255,13 @@ def main():
     print()
 
     # ===========================================================
-    # 📦 DATA VALIDATION & MONITORING (Recommended)
+    # DATA VALIDATION & MONITORING (Recommended)
     # ===========================================================
     # Package ini untuk memastikan data quality dan monitoring di production.
-    print("📦 DATA VALIDATION & MONITORING (Recommended)")
+    # Evidently AI untuk drift detection dan data quality reports.
+    # Pandera untuk schema validation.
+    # Great Expectations untuk comprehensive data validation.
+    print("PANDUAN DATA VALIDATION & MONITORING (Recommended)")
     print("-" * 40)
     mon_packages = [
         ("evidently", "evidently", True),
@@ -248,10 +276,13 @@ def main():
     print()
 
     # ===========================================================
-    # 📦 LLM ENGINEERING (Recommended)
+    # LLM ENGINEERING (Recommended)
     # ===========================================================
     # Package ini untuk membangun aplikasi LLM seperti RAG dan agents.
-    print("📦 LLM ENGINEERING (Recommended)")
+    # LangChain untuk chaining LLM calls.
+    # ChromaDB untuk vector database (simple, local).
+    # OpenAI API untuk prototyping dengan GPT models.
+    print("PANDUAN LLM ENGINEERING (Recommended)")
     print("-" * 40)
     llm_packages = [
         ("langchain", "langchain", True),
@@ -267,27 +298,28 @@ def main():
     print()
 
     # ===========================================================
-    # 📦 INTERACTIVE ENVIRONMENT
+    # INTERACTIVE ENVIRONMENT
     # ===========================================================
     # Jupyter/IPython memungkinkan eksplorasi data secara interaktif.
-    print("📦 INTERACTIVE ENVIRONMENT")
+    # ipykernel untuk VS Code Interactive / Jupyter Notebook.
+    print("PANDUAN INTERACTIVE ENVIRONMENT")
     print("-" * 40)
     check_package("jupyter", "jupyter", optional=True)
     check_package("ipykernel", "ipykernel", optional=True)
     print()
 
     # ===========================================================
-    # 📋 SUMMARY
+    # SUMMARY
     # ===========================================================
     # Menggabungkan semua package yang belum terinstall untuk summary.
     print("=" * 60)
-    print("📋 SUMMARY")
+    print("PANDUAN SUMMARY")
     print("=" * 60)
 
     all_missing = core_missing + dl_missing + nlp_missing + mlops_missing
 
     if all_missing:
-        print("\n📦 Install semua yang belum ada:")
+        print("\nPANDUAN Install semua yang belum ada:")
         print("   pip install numpy pandas matplotlib seaborn scikit-learn")
         print("   pip install torch torchvision torchaudio")
         print("   pip install transformers datasets")
@@ -299,38 +331,38 @@ def main():
         print("   pip install evidently pandera")
         print("   pip install langchain langchain-openai openai chromadb")
     else:
-        print("🎉 Semua package wajib sudah terinstall!")
+        print("SELESAI Semua package wajib sudah terinstall!")
         print("   Kamu siap mulai ML Engineer Track.")
 
     print()
     print("=" * 60)
-    print("📁 Struktur Direktori — ML Engineer Track")
+    print("PANDUAN Struktur Direktori - ML Engineer Track")
     print("=" * 60)
     print("""
     machine-learning/
-    ├── README.md                      ← Roadmap utama (baca dulu!)
-    ├── 90-day-action-plan.md          ← Jadwal harian 90 hari
-    ├── AGENTS.md                      ← Panduan untuk AI agent
-    ├── 00-setup/                      ← Kamu di sini
-    ├── 01-fondasi-data/               ← NumPy, Pandas, Visualisasi
-    ├── 02-ml-dari-nol/                ← Bangun ML dengan NumPy only
-    ├── 03-classical-ml/               ← sklearn & model selection
-    ├── 04-deep-learning/              ← Neural nets & PyTorch
-    ├── 05-advanced/                   ← Transfer learning, NLP, Generative
-    ├── 06-expert/                     ← Paper impl, MLOps, Production
-    ├── 07-career-prep/                ← Interview, Resume, System Design ← NEW
-    ├── 08-production-ml/              ← Feature Store, Monitoring, LLM ← NEW
-    └── projects/                      ← Proyek mandiri (portfolio!)
+    |-- README.md                      <- Roadmap utama (baca dulu!)
+    |-- 90-day-action-plan.md          <- Jadwal harian 90 hari
+    |-- AGENTS.md                      <- Panduan untuk AI agent
+    |-- 00-setup/                      <- Kamu di sini
+    |-- 01-fondasi-data/               <- NumPy, Pandas, Visualisasi
+    |-- 02-ml-dari-nol/                <- Bangun ML dengan NumPy only
+    |-- 03-classical-ml/               <- sklearn & model selection
+    |-- 04-deep-learning/              <- Neural nets & PyTorch
+    |-- 05-advanced/                   <- Transfer learning, NLP, Generative
+    |-- 06-expert/                     <- Paper impl, MLOps, Production
+    |-- 07-career-prep/                <- Interview, Resume, System Design <- NEW
+    |-- 08-production-ml/              <- Feature Store, Monitoring, LLM <- NEW
+    |-- projects/                      <- Proyek mandiri (portfolio!)
     """)
 
     print("=" * 60)
-    print("🎯 Next Step")
+    print("TARGET Next Step")
     print("=" * 60)
     print("""
     1. Install semua package yang belum ada
     2. Baca 90-day-action-plan.md untuk jadwal harian
     3. Mulai dari 01-fondasi-data/01_numpy_essentials.py
-    4. Setiap selesai modul → commit ke git
+    4. Setiap selesai modul -> commit ke git
     """)
 
 

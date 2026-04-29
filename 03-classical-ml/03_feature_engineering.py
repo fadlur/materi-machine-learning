@@ -1,6 +1,6 @@
 """
 =============================================================
-FASE 3 — MODUL 3: FEATURE ENGINEERING
+FASE 3 - MODUL 3: FEATURE ENGINEERING
 =============================================================
 "Data scientists spend 80% of their time on data preparation."
 
@@ -12,9 +12,9 @@ Ini adalah SKILL yang paling membedakan:
 - Expert: create fitur yang "membuka" pattern tersembunyi
 
 Background EE memberikan keuntungan BESAR di sini:
-- Signal processing → feature extraction dari time series
-- Domain knowledge → meaningful engineered features
-- Physics-based features → fitur yang punya interpretasi fisik
+- Signal processing -> feature extraction dari time series
+- Domain knowledge -> meaningful engineered features
+- Physics-based features -> fitur yang punya interpretasi fisik
 
 Durasi target: 3-4 jam
 =============================================================
@@ -38,8 +38,48 @@ np.random.seed(42)
 
 
 # ===========================================================
-# 📖 BAGIAN 1: Numerical Transformations
+# BAGIAN 1: Numerical Transformations
 # ===========================================================
+# Scaling adalah langkah preprocessing yang PENTING.
+# Banyak algoritma (SVM, KNN, Neural Network, PCA) sensitive ke scale.
+#
+# Matematika Scaling:
+# 1. StandardScaler (Z-score normalization):
+#    z = (x - mu) / sigma
+#    Hasil: mean ~ 0, std ~ 1.
+#    Cocok untuk: data dengan distribusi Gaussian, outlier tidak terlalu ekstrem.
+#    PERINGATAN: tidak robust terhadap outlier (outlier bisa memindahkan mean).
+#
+# 2. MinMaxScaler:
+#    x_scaled = (x - min) / (max - min)
+#    Hasil: range [0, 1] (atau [-1, 1] jika ada negatif).
+#    Cocok untuk: data dengan batas yang jelas (image pixel 0-255).
+#    PERINGATAN: sangat sensitif terhadap outlier (outlier bisa "compress"
+#    data normal ke range kecil).
+#
+# 3. RobustScaler:
+#    x_scaled = (x - median) / IQR
+#    IQR = Q3 - Q1 (interquartile range, 75th - 25th percentile).
+#    Cocok untuk: data dengan outlier yang signifikan.
+#    Lebih robust karena median dan IQR tidak dipengaruhi outlier ekstrem.
+#
+# Kapan menggunakan yang mana?
+# - Data Gaussian tanpa outlier: StandardScaler.
+# - Data dengan outlier: RobustScaler.
+# - Data dengan batas known: MinMaxScaler.
+# - Algoritma berbasis jarak (KNN, SVM): WAJIB scaling.
+# - Tree-based (Random Forest, XGBoost): tidak perlu scaling.
+#
+# Log Transform:
+# - Gunakan untuk distribusi right-skewed (ekor panjang ke kanan).
+# - log1p(x) = log(1+x) untuk handle zeros.
+# - Mengubah multiplicative relationships menjadi additive.
+# - Contoh: income, population, sensor readings dengan decay.
+#
+# Edge case:
+# - Jangan standardize sebelum split data! Fit scaler hanya pada training data.
+# - Log transform pada nilai negatif: tambahkan offset atau gunakan signed log.
+# - Jika data sudah normalized (misal 0-1), scaling tambahan tidak perlu.
 
 # Generate sample data
 n = 1000
@@ -72,9 +112,13 @@ for i, (name, scaler) in enumerate(scalers.items()):
 plt.tight_layout()
 plt.savefig('01_scaling.png', dpi=100, bbox_inches='tight')
 plt.close()
-print("📊 Saved: 01_scaling.png")
+print("OK Saved: 01_scaling.png")
 
 # Log transform untuk distribusi skewed
+# Log transform mengurangi skewness dengan "mengepaskan" ekor panjang.
+# Rumus: log1p(x) = ln(1+x). Mengapa +1? Untuk handle x=0 (ln(0) undefined).
+# Transformasi ini membuat distribusi lebih mendekati Gaussian,
+# yang membantu algoritma berbasis jarak dan linear models.
 data['vibration_log'] = np.log1p(data['vibration'])  # log(1+x) untuk handle zeros
 data['hours_log'] = np.log1p(data['hours_running'])
 
@@ -85,30 +129,61 @@ print("Vibration - Skewness after log:  "
 
 
 # ===========================================================
-# 📖 BAGIAN 2: Domain-Specific Features (EE-Based!)
+# BAGIAN 2: Domain-Specific Features (EE-Based!)
 # ===========================================================
 # Fitur yang dibuat berdasarkan domain knowledge SELALU lebih
 # powerful dari fitur statistik generik.
+#
+# Mengapa domain features lebih baik?
+# - Interpretability: fitur berbasis fisika bisa dijelaskan ke engineer lain.
+# - Discriminative power: hubungan fisika seringkali memang ada di data.
+# - Robustness: fitur fisika biasanya lebih stabil terhadap noise.
+# - Transferability: knowledge dari satu sistem bisa dipakai ke sistem serupa.
+#
+# Contoh domain features untuk motor listrik:
+# - Power (P = V * I): indikator beban. Perubahan power bisa menandakan fault.
+# - Power factor (cos(theta)): indikator efisiensi. PF rendah = reactive power tinggi.
+# - Thermal risk (I * T): kombinasi arus tinggi dan suhu tinggi = bahaya.
+# - Vibration per RPM: vibrasi tinggi di RPM rendah lebih serius (resonance).
+#
+# TIPS: Domain knowledge adalah competitive advantage untuk EE engineer.
+# Jangan hanya mengandalkan fitur statistik generik!
 
 # Power (dari Teknik Elektro: P = V * I)
 data['power'] = data['voltage'] * data['current']
 
 # Apparent power, Power factor (jika punya phase angle)
+# Matematika 3-phase power:
+# - Apparent power S = V_rms * I_rms (VA)
+# - Real power P = V_rms * I_rms * cos(theta) (Watt)
+# - Reactive power Q = V_rms * I_rms * sin(theta) (VAR)
+# - Power factor = P / S = cos(theta)
+# PF mendekati 1 berarti efisien. PF rendah berarti banyak reactive power.
 data['phase_angle'] = np.random.uniform(0, np.pi/4, n)
 data['real_power'] = data['voltage'] * data['current'] * np.cos(data['phase_angle'])
 data['reactive_power'] = data['voltage'] * data['current'] * np.sin(data['phase_angle'])
 data['power_factor'] = np.cos(data['phase_angle'])
 
 # Efficiency indicator
+# Power per RPM mengindikasikan seberapa efisien motor bekerja.
+# Motor yang sehat memiliki rasio power/RPM yang konsisten.
 data['power_per_rpm'] = data['power'] / (data['rpm'] + 1)
 
 # Thermal indicator (arus tinggi + suhu tinggi = bahaya!)
+# Hubungan termal: P_loss = I**2 * R. Panas proporsional dengan kuadrat arus.
+# Ini adalah indikator early warning untuk overheating.
 data['thermal_risk'] = data['current'] * data['temperature'] / 100
 
 # Vibration normalized by RPM (vibrasi tinggi di RPM rendah = lebih serius)
+# Resonance sering terjadi pada frekuensi tertentu. Normalisasi RPM
+# membantu mendeteksi abnormal vibration terlepas dari kecepatan.
 data['vibration_per_rpm'] = data['vibration'] / (data['rpm'] + 1) * 1000
 
 # Operational age indicator
+# Binning continuous ke categorical bisa membantu model menangkap
+# non-linear relationships. Contoh: degradasi tidak linear dengan waktu.
+# pd.cut menggunakan interval sama lebar. pd.qcut menggunakan quantile
+# (sama jumlah sample per bin).
 data['age_category'] = pd.cut(data['hours_running'],
                                bins=[0, 200, 1000, 5000, np.inf],
                                labels=['new', 'running-in', 'normal', 'aging'])
@@ -119,9 +194,28 @@ print(data[['power', 'power_factor', 'thermal_risk',
 
 
 # ===========================================================
-# 📖 BAGIAN 3: Time Series Features
+# BAGIAN 3: Time Series Features
 # ===========================================================
 # Untuk data yang punya komponen waktu (sensor, monitoring)
+#
+# Mengapa time series features penting?
+# - Single sample tidak cukup: fault biasanya terlihat dari pattern di window.
+# - Temporal dynamics: trend, seasonality, transients.
+# - Statistical aggregation: reduce noise dengan summary statistics.
+#
+# Fitur yang umum diekstrak:
+# - Basic stats: mean, std, min, max, range, skewness, kurtosis
+#   Kurtosis > 3 menandakan impulsive noise (penting untuk bearing fault detection).
+# - Percentiles: q25, q50, q75. Robust terhadap outliers.
+# - Rolling stats: moving average, moving std. Menangkap local trends.
+# - Rate of change: diff mean, max diff. Deteksi abrupt changes.
+# - Zero crossings: jumlah perubahan tanda. Related ke frekuensi dasar.
+#
+# Koneksi Teknik Elektro:
+# - Zero crossings = fundamental frequency estimation
+# - RMS = effective value dari sinyal AC
+# - Crest factor = peak/RMS, indicator of impulsive noise
+# - Kurtosis = sensitif terhadap transient/spike
 
 def extract_time_features(series, window_sizes=[5, 10, 20]):
     """
@@ -152,6 +246,11 @@ def extract_time_features(series, window_sizes=[5, 10, 20]):
     - Zero crossings = fundamental frequency estimation
     - RMS = effective value dari sinyal AC
     - Crest factor = peak/RMS, indicator of impulsive noise
+    
+    TIPS:
+    - Window size harus sesuai dengan timescale fenomena yang dipantau.
+    - Untuk fault detection, gunakan window yang mencakup beberapa siklus.
+    - Rolling features di ujung window bisa NaN -> handle dengan care.
     """
     features = {}
     
@@ -178,6 +277,8 @@ def extract_time_features(series, window_sizes=[5, 10, 20]):
     features['max_diff'] = series.diff().abs().max()
     
     # Zero crossings (relevant untuk signal analysis!)
+    # Zero crossing = titik di mana sinyal melewati mean-nya.
+    # Jumlah zero crossings dalam window berkorelasi dengan frekuensi dominan.
     zero_crossings = np.sum(np.diff(np.sign(series - series.mean())) != 0)
     features['zero_crossings'] = zero_crossings
     
@@ -197,12 +298,38 @@ for name, value in list(features.items())[:10]:
 
 
 # ===========================================================
-# 📖 BAGIAN 4: Frequency Domain Features
+# BAGIAN 4: Frequency Domain Features
 # ===========================================================
+# FFT (Fast Fourier Transform) memetakan sinyal dari time domain
+# ke frequency domain. Fitur di frequency domain sering lebih
+# diskriminatif untuk fault detection.
+#
+# Mengapa frequency domain?
+# - Fault mekanis menghasilkan signature frekuensi yang khas.
+# - Contoh: bearing fault menghasilkan frekuensi karakteristik
+#   (BPFO, BPFI, BSF) yang bisa dideteksi di spektrum.
+# - Noise di time domain bisa di-filter di frequency domain.
+#
+# Fitur Frequency Domain:
+# - dominant_freq: frekuensi dengan magnitude tertinggi.
+# - spectral_energy: total energy di frequency domain (Parseval's theorem).
+# - spectral_entropy: seberapa "flat" spektrum. Tinggi = noise-like.
+#   Rendah = tonal (dominant frequency jelas).
+# - spectral_centroid: "center of mass" spectrum. Tinggi = sinyal "bright".
+# - spectral_bandwidth: spread spectrum. Lebar = banyak frekuensi.
+# - energy_band: energy ratio per frequency band (low/mid/high).
+# - thd: Total Harmonic Distortion = sqrt(sum(harmonics**2)) / fundamental.
+#   THD > 5% menandakan power quality issue.
+#
+# Koneksi Teknik Elektro:
+# - FFT = transformasi ke frequency domain
+# - THD = ukuran harmonic distortion (power quality)
+# - Spectral centroid = "brightness" dari sinyal
+# - Band energy = filter bank analysis (seperti equalizer)
 
 def extract_frequency_features(signal, fs=1000):
     """
-    Extract fitur dari frequency domain — familiar buat EE!
+    Extract fitur dari frequency domain - familiar buat EE!
     
     Parameters:
     -----------
@@ -231,32 +358,47 @@ def extract_frequency_features(signal, fs=1000):
     - FFT = transformasi ke frequency domain
     - THD = ukuran harmonic distortion (power quality)
     - Spectral centroid = "brightness" dari sinyal
+    
+    TIPS:
+    - Gunakan windowing (Hanning/Hamming) sebelum FFT untuk mengurangi leakage.
+    - fs harus sesuai dengan Nyquist: fs > 2 * f_max.
+    - Untuk sinyal non-stasioner, gunakan STFT (Short-Time Fourier Transform).
     """
     features = {}
     
     # FFT
+    # np.fft.rfft hanya menghitung positive frequencies (efisien untuk real signal).
     fft_vals = np.fft.rfft(signal)
     freqs = np.fft.rfftfreq(len(signal), 1/fs)
     magnitude = np.abs(fft_vals)
     power = magnitude ** 2
     
     # Spectral features
+    # +1 pada argmax untuk skip DC component (freq=0) karena biasanya tidak informatif.
     features['dominant_freq'] = freqs[np.argmax(magnitude[1:]) + 1]
     features['spectral_energy'] = np.sum(power)
-    features['spectral_entropy'] = -np.sum(
-        (power / power.sum()) * np.log2(power / power.sum() + 1e-12)
-    )
+    
+    # Spectral entropy: mengukur seberapa "teratur" spektrum.
+    # Entropi tinggi = spektrum flat (white noise).
+    # Entropi rendah = spektrum terpusat (tonal).
+    psd_norm = power / (power.sum() + 1e-12)
+    features['spectral_entropy'] = -np.sum(psd_norm * np.log2(psd_norm + 1e-12))
+    
     features['spectral_centroid'] = np.sum(freqs * magnitude) / np.sum(magnitude)
     features['spectral_bandwidth'] = np.sqrt(
         np.sum((freqs - features['spectral_centroid'])**2 * magnitude) / np.sum(magnitude)
     )
     
     # Band energy ratios
+    # Membagi spektrum ke band frekuensi untuk analisis multi-band.
     for low, high, name in [(0, 50, 'low'), (50, 200, 'mid'), (200, fs//2, 'high')]:
         mask = (freqs >= low) & (freqs < high)
         features[f'energy_{name}'] = np.sum(power[mask]) / np.sum(power)
     
-    # THD (Total Harmonic Distortion) — klasik EE!
+    # THD (Total Harmonic Distortion) - klasik EE!
+    # THD mengukur seberapa "murni" sinyal sinusoidal.
+    # THD = 0 berarti sinyal murni sinusoidal (tidak ada harmonik).
+    # THD tinggi menandakan nonlinear load atau fault.
     fundamental_idx = np.argmax(magnitude[1:]) + 1
     fundamental_mag = magnitude[fundamental_idx]
     harmonics_mag = np.sqrt(np.sum(magnitude[2*fundamental_idx::fundamental_idx]**2))
@@ -277,8 +419,39 @@ for name, value in freq_features.items():
 
 
 # ===========================================================
-# 📖 BAGIAN 5: Feature Selection
+# BAGIAN 5: Feature Selection
 # ===========================================================
+# Mengapa feature selection penting?
+# - Curse of dimensionality: semakin banyak fitur, semakin banyak data yang dibutuhkan.
+# - Overfitting: fitur noise bisa menyebabkan model overfit.
+# - Interpretability: model dengan fewer fitur lebih mudah dijelaskan.
+# - Training time: fewer fitur = training lebih cepat.
+# - Inference time: fewer fitur = prediksi lebih cepat (penting untuk real-time).
+#
+# Tiga kategori feature selection:
+# 1. Filter methods: seleksi berdasarkan statistik, independent dari model.
+# 2. Wrapper methods: seleksi dengan evaluasi model (RFE, forward/backward selection).
+# 3. Embedded methods: seleksi selama training (L1 regularization, tree importance).
+#
+# Method 1: Univariate (F-test / ANOVA)
+# - F-test = ANOVA F-value antara feature dan target.
+# - Mengukur seberapa besar variance antar kelas dibanding variance dalam kelas.
+# - Cocok untuk: linear relationships, continuous features.
+# - PERINGATAN: hanya menangkap univariate relationships (bisa miss
+#   fitur yang penting hanya dalam kombinasi).
+#
+# Method 2: Mutual Information (MI)
+# - MI = ukuran ketergantungan (informasi bersama) antara feature dan target.
+# - Bisa menangkap non-linear relationships.
+# - MI = 0 berarti independent. MI tinggi berarti strongly dependent.
+# - PERINGATAN: estimasi MI untuk continuous data bisa noisy (perlu banyak sample).
+#
+# Method 3: Tree-based Importance
+# - Importance = decrease in impurity (Gini/Entropy) ketika feature digunakan untuk split.
+# - Di-average di seluruh tree dan split.
+# - Bisa menangkap interactions antar fitur (karena tree bisa split berulang).
+# - PERINGATAN: biased ke fitur dengan banyak nilai unik (high cardinality).
+#   Gunakan permutation importance untuk hasil lebih reliable.
 
 # Generate dataset dengan fitur informative dan noisy
 from sklearn.datasets import make_classification
@@ -291,7 +464,6 @@ feature_names = [f'feat_{i}' for i in range(20)]
 print("\n=== Feature Selection Methods ===")
 
 # Method 1: Univariate (F-test)
-# F-test = ANOVA F-value between feature and target
 selector_f = SelectKBest(f_classif, k=10)
 X_selected_f = selector_f.fit_transform(X, y)
 scores_f = selector_f.scores_
@@ -301,8 +473,6 @@ for idx in top_f:
     print(f"  {feature_names[idx]}: {scores_f[idx]:.2f}")
 
 # Method 2: Mutual Information
-# MI = ukuran ketergantungan antara feature dan target
-# Bisa menangkap non-linear relationships
 selector_mi = SelectKBest(mutual_info_classif, k=10)
 selector_mi.fit(X, y)
 scores_mi = selector_mi.scores_
@@ -312,7 +482,6 @@ for idx in top_mi:
     print(f"  {feature_names[idx]}: {scores_mi[idx]:.4f}")
 
 # Method 3: Random Forest importance
-# Importance = decrease in impurity ketika feature digunakan untuk split
 rf = RandomForestClassifier(n_estimators=100, random_state=42)
 rf.fit(X, y)
 importances = rf.feature_importances_
@@ -337,12 +506,27 @@ for ax, (name, scores) in zip(axes, methods):
 plt.tight_layout()
 plt.savefig('02_feature_selection.png', dpi=100, bbox_inches='tight')
 plt.close()
-print("\n📊 Saved: 02_feature_selection.png")
+print("\nOK Saved: 02_feature_selection.png")
 
 
 # ===========================================================
-# 📖 BAGIAN 6: Dimensionality Reduction Impact
+# BAGIAN 6: Dimensionality Reduction Impact
 # ===========================================================
+# Mengapa dimensionality reduction bisa meningkatkan performance?
+# - Mengurangi noise: fitur dengan variance rendah seringnya noise.
+# - Mengurangi multicollinearity: fitur berkorelasi tinggi redundant.
+# - Mengurangi overfitting: fewer dimensions = simpler model.
+# - Mempercepat training: fewer fitur = computation lebih cepat.
+#
+# Tradeoff:
+# - Terlalu sedikit fitur = underfitting (kehilangan informasi penting).
+# - Terlalu banyak fitur = overfitting (curse of dimensionality).
+# - Optimal: biasanya ada "sweet spot" yang bisa ditemukan dengan CV.
+#
+# Cara menentukan jumlah fitur optimal:
+# - Plot performance vs jumlah fitur.
+# - Pilih titik di mana penambahan fitur tidak lagi meningkatkan performance.
+# - Gunakan nested CV untuk unbiased estimate.
 
 print("\n=== Effect of Feature Selection on Model Performance ===")
 n_features_list = [3, 5, 10, 15, 20]
@@ -357,30 +541,30 @@ for n_feat in n_features_list:
     ])
     cv_scores = cross_val_score(pipeline, X, y, cv=5)
     scores_by_n.append(cv_scores.mean())
-    print(f"  {n_feat} features: {cv_scores.mean():.4f} ± {cv_scores.std():.4f}")
+    print(f"  {n_feat} features: {cv_scores.mean():.4f} +/- {cv_scores.std():.4f}")
 
 
 # ===========================================================
-# 🏋️ EXERCISE 10: Feature Engineering Pipeline
+# LATIHAN 10: Feature Engineering Pipeline
 # ===========================================================
 """
-🎯 Learning Objectives:
+TARGET Learning Objectives:
    - Membangun automated feature engineering pipeline
    - Mengimplementasikan feature selection strategies
    - Membuat reusable feature engineering class
 
-📋 LANGKAH-LANGKAH:
+PANDUAN LANGKAH-LANGKAH:
 
 STEP 1: Automatic Feature Generation
-─────────────────────────────────────
+-------------------------------------
 Buat class FeatureEngineer yang bisa generate features otomatis:
 
    a) Polynomial interactions:
-      - X1*X2, X1², X2² untuk semua pasangan fitur
+      - X1*X2, X1**2, X2**2 untuk semua pasangan fitur
       - Gunakan PolynomialFeatures dari sklearn
       
    b) Log transforms:
-      - Deteksi skewness > 1 → apply log1p
+      - Deteksi skewness > 1 -> apply log1p
       - Simpan mapping untuk transformasi inverse
       
    c) Ratio features:
@@ -394,15 +578,15 @@ Buat class FeatureEngineer yang bisa generate features otomatis:
 
 
 STEP 2: Automatic Feature Selection
-────────────────────────────────────
+------------------------------------
 Implementasi multi-stage selection:
 
    a) Remove low-variance features:
       - threshold = 0.01 * variance max
-      - Fitur dengan variance ~0 = konstan → tidak informatif
+      - Fitur dengan variance ~0 = konstan -> tidak informatif
       
    b) Remove highly correlated features:
-      - correlation > 0.95 → redundant
+      - correlation > 0.95 -> redundant
       - Keep satu dari setiap pasangan correlated
       
    c) Select top K by mutual information:
@@ -414,15 +598,15 @@ Implementasi multi-stage selection:
       - Remove fitur dengan importance terendah
       - Ulangi sampai tersisa K fitur
       
-   💡 KENAPA multi-stage?
+   TIPS KENAPA multi-stage?
      - Setiap stage menghilangkan tipe redundancy yang berbeda
-     - Low-variance → constant features
-     - High-correlation → linear redundancy
-     - MI/RFE → relevance to target
+     - Low-variance -> constant features
+     - High-correlation -> linear redundancy
+     - MI/RFE -> relevance to target
 
 
 STEP 3: Pipeline Integration
-────────────────────────────
+----------------------------
    a) fit_transform(X_train, y_train):
       - Fit semua transformers pada training data
       - Transform training data
@@ -439,7 +623,7 @@ STEP 3: Pipeline Integration
 
 
 STEP 4: Report Generation
-──────────────────────────
+--------------------------
    Buat report yang menjelaskan:
    
    a) Feature importance ranking (top 10)
@@ -458,19 +642,19 @@ STEP 4: Report Generation
       - Binned features: [list]
 
 
-💡 HINTS:
+TIPS HINTS:
    - Gunakan sklearn.base.BaseEstimator untuk compatibility
    - Simpan semua transformers di dictionary: self.transformers_
    - Gunakan joblib untuk serialize pipeline
    - Document setiap transformation dengan docstring
 
-⚠️ COMMON MISTAKES:
-   - Fit pada test data → data leakage
+PERINGATAN COMMON MISTAKES:
+   - Fit pada test data -> data leakage
    - Tidak handle fitur baru di test data
-   - Polynomial degree terlalu tinggi → explosion dimensionality
+   - Polynomial degree terlalu tinggi -> explosion dimensionality
    - Tidak inverse transform untuk interpretasi
 
-🎯 EXPECTED OUTPUT:
+TARGET EXPECTED OUTPUT:
    - Reusable FeatureEngineer class
    - Comprehensive report
    - Performance improvement dari feature engineering
@@ -479,18 +663,18 @@ STEP 4: Report Generation
 
 
 # ===========================================================
-# 🔥 CHALLENGE: End-to-End Feature Engineering
+# CHALLENGE: End-to-End Feature Engineering
 # ===========================================================
 """
-🎯 Learning Objectives:
+TARGET Learning Objectives:
    - Mengaplikasikan feature engineering ke dataset realistis
    - Menggabungkan domain knowledge EE dengan ML
    - Membangun production-ready feature pipeline
 
-📋 LANGKAH-LANGKAH:
+PANDUAN LANGKAH-LANGKAH:
 
 STEP 1: Generate Dataset
-────────────────────────
+------------------------
 Konteks: Predictive Maintenance untuk Motor Listrik
 
    Dataset (generate synthetic):
@@ -498,14 +682,14 @@ Konteks: Predictive Maintenance untuk Motor Listrik
    - Sensors: voltage, current, vibration (3-axis), temperature
    - Labels: 0=healthy, 1=degrading, 2=failing
    
-   💡 KENAPA window-based?
+   TIPS KENAPA window-based?
      - Fault biasanya terdeteksi dari pattern di window
      - Single sample tidak cukup informatif
      - Window = 1 detik dengan fs=1000 Hz
 
 
 STEP 2: Extract Features dari Setiap Window
-───────────────────────────────────────────
+-------------------------------------------
    Time domain (per window):
    - mean, std, RMS, peak, crest factor, kurtosis
    - Zero crossings, peak-to-peak amplitude
@@ -518,21 +702,21 @@ STEP 2: Extract Features dari Setiap Window
    
    Cross-sensor:
    - Correlation between voltage & current
-   - Vibration RMS (sqrt(vx² + vy² + vz²))
+   - Vibration RMS (sqrt(vx**2 + vy**2 + vz**2))
    - Cross-correlation lag antara sensors
 
 
 STEP 3: Domain Knowledge Feature Engineering
-─────────────────────────────────────────────
+---------------------------------------------
 Gunakan domain knowledge dari Teknik Elektro:
 
    a) Power features:
       - Apparent power = V_rms * I_rms
-      - Real power = V_rms * I_rms * cos(θ)
-      - Power factor = cos(θ)
+      - Real power = V_rms * I_rms * cos(theta)
+      - Power factor = cos(theta)
       
    b) Thermal aging:
-      - I²t (thermal aging indicator)
+      - I**2*t (thermal aging indicator)
       - Temperature rise above ambient
       
    c) Mechanical health:
@@ -546,7 +730,7 @@ Gunakan domain knowledge dari Teknik Elektro:
 
 
 STEP 4: Feature Selection
-─────────────────────────
+-------------------------
    a) Bandingkan 3+ metode selection:
       - Univariate (F-test, MI)
       - Tree-based importance
@@ -559,7 +743,7 @@ STEP 4: Feature Selection
 
 
 STEP 5: Train & Evaluate
-────────────────────────
+------------------------
    a) Dengan semua fitur
    b) Dengan selected features (top 10, 20, 30)
    c) Bandingkan:
@@ -573,21 +757,21 @@ STEP 5: Train & Evaluate
       - t-SNE dari features (lihat separability)
 
 
-💡 HINTS:
+TIPS HINTS:
    - ISO 10816 vibration severity bisa diapproximate dengan RMS
-   - THD = sqrt(sum(V_h²)) / V_1 untuk h=2..N
-   - I²t = integral dari I² dt (discretize dengan sum)
+   - THD = sqrt(sum(V_h**2)) / V_1 untuk h=2..N
+   - I**2*t = integral dari I**2 dt (discretize dengan sum)
    - Cross-correlation: np.correlate(sensor1, sensor2, mode='full')
 
-⚠️ COMMON MISTAKES:
-   - Feature extraction sebelum train/test split → leakage
+PERINGATAN COMMON MISTAKES:
+   - Feature extraction sebelum train/test split -> leakage
    - Tidak normalisasi frequency domain features
    - Mengabaikan class imbalance di evaluation
-   - Terlalu banyak fitur → curse of dimensionality
+   - Terlalu banyak fitur -> curse of dimensionality
 
-🎯 EXPECTED OUTPUT:
+TARGET EXPECTED OUTPUT:
    - 50+ features extracted per window
-   - Selected features: 15-20 dengan performance ≥ 95% dari all features
+   - Selected features: 15-20 dengan performance >= 95% dari all features
    - Domain features dominan di top importance
    - Clear narrative: "fitur X penting karena ..."
 
@@ -595,14 +779,14 @@ Simpan hasilnya di projects/project_02_klasifikasi_sinyal/
 """
 
 print("\n" + "="*50)
-print("🎉 FASE 3 SELESAI!")
+print("OK FASE 3 SELESAI!")
 print("="*50)
 print("""
 Kamu sekarang bisa:
-✅ Menggunakan sklearn untuk supervised learning
-✅ Clustering, PCA, anomaly detection
-✅ Feature engineering (termasuk domain-specific EE features!)
-✅ Proper feature selection
+OK Menggunakan sklearn untuk supervised learning
+OK Clustering, PCA, anomaly detection
+OK Feature engineering (termasuk domain-specific EE features!)
+OK Proper feature selection
 
 Sebelum lanjut:
 1. Selesaikan Project 2: Klasifikasi Sinyal

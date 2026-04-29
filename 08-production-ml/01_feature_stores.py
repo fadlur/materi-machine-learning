@@ -1,422 +1,762 @@
 """
 =============================================================
-FASE 8 — MODUL 1: FEATURE STORES & DATA VERSIONING
+FASE 8 - MODUL 1: FEATURE STORES
 =============================================================
-Feature store adalah komponen kritis di production ML systems.
-Ini menjembatani gap antara data engineering dan ML engineering.
+Feature Store = centralized storage untuk features yang
+digunakan oleh ML models.
 
-Background backend kamu sangat relevan di sini:
-- Database design → Feature store schema design
-- API design → Feature serving APIs
-- Caching → Online feature store
-- Data pipelines → Feature computation pipelines
+Mengapa feature store penting?
+- Consistency: training dan serving menggunakan features yang sama
+- Reusability: features bisa di-share antar teams dan models
+- Governance: tracking dan versioning features
+- Efficiency: avoid redundant computation
 
-Durasi target: 3-4 hari
-=============================================================
-"""
+Koneksi Teknik Elektro:
+- Feature store = shared signal conditioning unit
+- Online store = real-time buffer untuk immediate access
+- Offline store = historical data logger untuk analysis
+- Feature transformation = DSP pipeline (filtering, scaling)
+
+Durasi target: 3-4 jam
+============================================================="""
 
 import numpy as np
 import pandas as pd
+from typing import Dict, List, Optional, Any
+from datetime import datetime, timedelta
+import json
 
-# ===========================================================
-# 📖 BAGIAN 1: Kenapa Feature Store?
-# ===========================================================
-
-print("""
-╔══════════════════════════════════════════════════════════╗
-║     KENAPA FEATURE STORE?                                ║
-╠══════════════════════════════════════════════════════════╣
-║                                                          ║
-║  TANPA FEATURE STORE:                                    ║
-║  ┌─────────┐    ┌─────────┐    ┌─────────┐             ║
-║  │ Data Scientist A │    │ Data Scientist B │            ║
-║  │ Feature: avg_click_7d │    │ Feature: click_avg_week │ ║
-║  │ Logic berbeda!        │    │ Logic berbeda!         │ ║
-║  └─────────┘    └─────────┘    └─────────┘             ║
-║  → Training-serving skew, inconsistency, duplication    ║
-║                                                          ║
-║  DENGAN FEATURE STORE:                                   ║
-║  ┌─────────┐    ┌─────────┐    ┌─────────┐             ║
-║  │ Training│◀───│Feature  │───▶│ Serving │             ║
-║  │ Pipeline│    │Store    │    │ API     │             ║
-║  └─────────┘    └─────────┘    └─────────┘             ║
-║       ▲                              │                  ║
-║       └────── SAME FEATURE LOGIC ────┘                  ║
-║                                                          ║
-║  BENEFITS:                                               ║
-║  1. Feature reuse antar team & project                   ║
-║  2. Training-serving consistency                         ║
-║  3. Feature versioning & lineage                         ║
-║  4. Point-in-time correctness (no data leakage!)         ║
-║  5. Feature sharing & discovery                          ║
-║                                                          ║
-╚══════════════════════════════════════════════════════════╝
-""")
+np.random.seed(42)
 
 
 # ===========================================================
-# 📖 BAGIAN 2: Arsitektur Feature Store
+# BAGIAN 1: Feature Store Concepts
 # ===========================================================
+print("="*60)
+print("BAGIAN 1: KONSEP FEATURE STORE")
+print("="*60)
 
-print("""
-╔══════════════════════════════════════════════════════════╗
-║     FEATURE STORE ARCHITECTURE                           ║
-╠══════════════════════════════════════════════════════════╣
-║                                                          ║
-║  ┌─────────────────────────────────────────────┐         ║
-║  │            DATA SOURCES                     │         ║
-║  │  (Database, Stream, Files, API)             │         ║
-║  └──────────────────┬──────────────────────────┘         ║
-║                     │                                    ║
-║  ┌──────────────────▼──────────────────────────┐         ║
-║  │        FEATURE COMPUTATION                  │         ║
-║  │  - Batch (Spark, Pandas)                    │         ║
-║  │  - Streaming (Flink, Kafka Streams)         │         ║
-║  │  - On-demand (Python function)              │         ║
-║  └──────────────────┬──────────────────────────┘         ║
-║                     │                                    ║
-║        ┌────────────┴────────────┐                      ║
-║        ▼                         ▼                      ║
-║  ┌─────────────┐          ┌─────────────┐              ║
-║  │ OFFLINE     │          │ ONLINE      │              ║
-║  │ STORE       │          │ STORE       │              ║
-║  │ (Data Lake/ │          │ (Redis/     │              ║
-║  │  Warehouse) │          │  DynamoDB)  │              ║
-║  │             │          │             │              ║
-║  │ - Historical│          │ - Low latency│             ║
-║  │ - Training  │          │ - Real-time │              ║
-║  │ - Batch pred│          │ - Pre-computed│            ║
-║  └──────┬──────┘          └──────┬──────┘              ║
-║         │                        │                     ║
-║         ▼                        ▼                     ║
-║  ┌─────────────────────────────────────────┐            ║
-║  │         FEATURE SERVING                 │            ║
-║  │  - GetFeatures() for training           │            ║
-║  │  - GetOnlineFeatures() for serving      │            ║
-║  └─────────────────────────────────────────┘            ║
-║                                                          ║
-╚══════════════════════════════════════════════════════════╝
-""")
+feature_store_concepts = """
+TARGET ARSITEKTUR FEATURE STORE:
+
++---------------------------------------------------------+
+|                    FEATURE STORE                        |
++---------------------------------------------------------+
+|                                                         |
+|  +--------------+         +--------------+             |
+|  | ONLINE STORE |         | OFFLINE STORE|             |
+|  |  (Low Latency|         |  (Batch/     |             |
+|  |   Real-time) |         |   Historical)|             |
+|  +------+-------+         +------+-------+             |
+|         |                        |                      |
+|         v                        v                      |
+|  +--------------+         +--------------+             |
+|  |  Redis /     |         |  Data Lake / |             |
+|  |  DynamoDB    |         |  Warehouse   |             |
+|  |  (ms access) |         |  (batch)     |             |
+|  +--------------+         +--------------+             |
+|                                                         |
+|  +-------------------------------------------------+   |
+|  |         FEATURE TRANSFORMATION ENGINE            |   |
+|  |  (compute features dari raw data)               |   |
+|  +-------------------------------------------------+   |
+|                                                         |
++---------------------------------------------------------+
+
+TARGET ONLINE STORE:
+- Purpose: real-time serving (API calls)
+- Latency: < 10ms
+- Storage: key-value (Redis, DynamoDB)
+- Data: latest feature values
+- Use case: recommendation, fraud detection
+
+DETAIL:
+- Online store harus sangat cepat karena dipanggil setiap request.
+- Redis adalah pilihan populer karena in-memory dan mendukung
+  data structures seperti hashes dan sorted sets.
+- DynamoDB adalah managed alternative di AWS.
+- Data di-update secara real-time atau near real-time.
+
+TARGET OFFLINE STORE:
+- Purpose: training data generation
+- Latency: minutes to hours (batch)
+- Storage: data warehouse (BigQuery, Snowflake)
+- Data: historical feature values
+- Use case: model training, backtesting
+
+DETAIL:
+- Offline store menyimpan historical data dalam format
+  yang cocok untuk batch processing.
+- Data warehouse seperti BigQuery atau Snowflake bisa
+  handle queries analytical yang kompleks.
+- Data di-update secara batch (misal: nightly ETL).
+
+TARGET POINT-IN-TIME CORRECTNESS:
+- Training: features harus dari waktu sebelum label
+- Serving: features dari current time
+- Challenge: avoid data leakage!
+
+DETAIL:
+- Data leakage adalah masalah SERIOUS di ML.
+- Contoh: menggunakan future information untuk predict past.
+- Point-in-time correctness memastikan kita tidak menggunakan
+  information yang belum tersedia pada waktu prediction.
+- Ini memerlukan timestamp tracking di setiap feature.
+
+TARGET FEATURE TYPES:
+1. Raw Features: langsung dari data source
+2. Transformed Features: hasil transformation
+3. Aggregated Features: statistics over time windows
+4. Derived Features: combinations dari features lain
+
+Koneksi Teknik Elektro:
+- Feature transformation = signal conditioning
+- Online store = sample-and-hold circuit
+- Offline store = data recorder
+- Point-in-time = causality constraint
+"""
+print(feature_store_concepts)
 
 
 # ===========================================================
-# 📖 BAGIAN 3: Feature Store Sederhana (Dari Nol)
+# BAGIAN 2: Simple Feature Store Implementation
 # ===========================================================
-# Kita akan bangun feature store sederhana untuk memahami konsep.
-# Di production, gunakan Feast, Tecton, atau SageMaker Feature Store.
+# Feature store production seperti Feast, Tecton, atau SageMaker
+# Feature Store punya kompleksitas tinggi.
+# Implementasi ini adalah educational version untuk memahami konsep dasar.
+#
+# KOMPONEN UTAMA FEATURE STORE:
+# 1. Feature Registry: metadata tentang features (nama, tipe, owner, dll)
+# 2. Online Store: key-value storage untuk real-time serving
+# 3. Offline Store: historical storage untuk training
+# 4. Transformation Engine: compute features dari raw data
 
 class SimpleFeatureStore:
     """
-    Feature store sederhana untuk memahami konsep.
+    Simplified feature store untuk educational purposes.
     
-    Konsep:
-    - FeatureGroup: kelompok feature yang related (user, item, interaction)
-    - OfflineStore: penyimpanan untuk training (Parquet/CSV)
-    - OnlineStore: penyimpanan untuk serving (in-memory dict)
+    Parameters:
+    -----------
+    online_store : dict
+        In-memory key-value store untuk online serving.
+    offline_store : pd.DataFrame
+        DataFrame dengan timestamped features.
+        
+    Notes:
+    ------
+    - Production feature stores: Feast, Tecton, SageMaker Feature Store
+    - This implementation untuk memahami konsep dasar
+    - Feature store memisahkan feature computation dari model training
+    
+    Koneksi Teknik Elektro:
+    - Online store = real-time register (current value)
+    - Offline store = historical log (time-series data)
+    - Feature transformation = signal processing pipeline
     """
     
     def __init__(self):
-        self.offline_store = {}  # {feature_group: pd.DataFrame}
-        self.online_store = {}   # {feature_group: {entity_id: features}}
-        self.feature_definitions = {}  # Metadata
-    
-    def register_feature_group(self, name, features, entities):
+        self.online_store = {}  # entity_id -> {feature_name: value}
+        self.offline_store = []  # List of records dengan timestamp
+        self.feature_definitions = {}  # feature_name -> metadata
+        
+    def register_feature(self, name: str, dtype: str,
+                         description: str, transformation: Optional[Any] = None):
         """
-        Register feature group dengan definisi.
+        Register feature definition.
         
         Parameters:
         -----------
         name : str
-            Nama feature group, e.g., "user_features"
-        features : list
-            List feature names, e.g., ["age", "avg_purchase_30d"]
-        entities : list
-            List entity keys, e.g., ["user_id"]
+            Feature name.
+        dtype : str
+            Data type ('numeric', 'categorical', 'boolean').
+        description : str
+            Human-readable description.
+        transformation : callable, optional
+            Function untuk transform raw value.
+            
+        Notes:
+        ------
+        - Feature registry adalah metadata catalog.
+        - Setiap feature harus punya owner dan documentation.
+        - Versioning: feature_name:v1, feature_name:v2.
         """
         self.feature_definitions[name] = {
-            'features': features,
-            'entities': entities
+            'dtype': dtype,
+            'description': description,
+            'transformation': transformation,
+            'created_at': datetime.now()
         }
-        print(f"✅ Registered feature group: {name}")
-        print(f"   Features: {features}")
-        print(f"   Entities: {entities}")
-    
-    def ingest_batch(self, feature_group, df):
+        print(f"Registered feature: {name} ({dtype})")
+        
+    def ingest_online(self, entity_id: str, features: Dict[str, Any]):
         """
-        Ingest data ke offline store.
+        Ingest features ke online store.
         
-        Di production, ini akan: 
-        - Compute features dengan Spark
-        - Validate data quality (Great Expectations)
-        - Write ke data lake (S3 + Parquet)
+        Parameters:
+        -----------
+        entity_id : str
+            Unique identifier (e.g., user_id, device_id).
+        features : dict
+            Feature values.
+            
+        Notes:
+        ------
+        - Online store di-update secara real-time.
+        - Setiap update meng-overwrite value sebelumnya.
+        - TTL (time-to-live) bisa diatur untuk auto-expire.
         """
-        self.offline_store[feature_group] = df.copy()
+        if entity_id not in self.online_store:
+            self.online_store[entity_id] = {}
         
-        # Build online store (pre-compute untuk serving)
-        entities = self.feature_definitions[feature_group]['entities']
-        self.online_store[feature_group] = {}
-        
-        for _, row in df.iterrows():
-            entity_key = tuple(row[e] for e in entities)
-            features = {f: row[f] for f in self.feature_definitions[feature_group]['features']}
-            self.online_store[feature_group][entity_key] = features
-        
-        print(f"📊 Ingested {len(df)} rows to '{feature_group}'")
-    
-    def get_online_features(self, feature_group, entity_keys):
+        # Apply transformations jika ada
+        for name, value in features.items():
+            if name in self.feature_definitions:
+                transform = self.feature_definitions[name]['transformation']
+                if transform:
+                    value = transform(value)
+            self.online_store[entity_id][name] = value
+            
+    def ingest_offline(self, entity_id: str, features: Dict[str, Any],
+                       timestamp: datetime):
         """
-        Get features untuk serving (low latency!).
+        Ingest features ke offline store dengan timestamp.
         
-        Di production:
-        - Query Redis/DynamoDB
-        - Latency target: <5ms
-        - Fallback ke on-demand computation kalau missing
+        Parameters:
+        -----------
+        entity_id : str
+            Unique identifier.
+        features : dict
+            Feature values.
+        timestamp : datetime
+            Timestamp untuk point-in-time correctness.
+            
+        Notes:
+        ------
+        - Offline store menyimpan historical data.
+        - Timestamp critical untuk point-in-time correctness.
+        - Data di-append, tidak di-overwrite.
         """
+        record = {
+            'entity_id': entity_id,
+            'timestamp': timestamp,
+            **features
+        }
+        self.offline_store.append(record)
+        
+    def get_online_features(self, entity_id: str,
+                            feature_names: List[str]) -> Dict[str, Any]:
+        """
+        Retrieve features dari online store.
+        
+        Parameters:
+        -----------
+        entity_id : str
+            Entity identifier.
+        feature_names : list
+            List of feature names to retrieve.
+            
+        Returns:
+        --------
+        dict
+            Feature values.
+            
+        Notes:
+        ------
+        - Latency critical: harus < 10ms
+        - Missing features -> handle dengan default values
+        - Fallback mechanism untuk partial failures
+        """
+        if entity_id not in self.online_store:
+            return {name: None for name in feature_names}
+        
+        entity_features = self.online_store[entity_id]
+        return {
+            name: entity_features.get(name, None)
+            for name in feature_names
+        }
+        
+    def get_offline_features(self, entity_ids: List[str],
+                             feature_names: List[str],
+                             timestamps: List[datetime]) -> pd.DataFrame:
+        """
+        Retrieve historical features dengan point-in-time correctness.
+        
+        Parameters:
+        -----------
+        entity_ids : list
+            List of entity identifiers.
+        feature_names : list
+            List of feature names.
+        timestamps : list
+            Point-in-time untuk setiap entity.
+            
+        Returns:
+        --------
+        pd.DataFrame
+            Features pada waktu yang diminta.
+            
+        Notes:
+        ------
+        - Point-in-time: ambil features SEBELUM timestamp
+        - Ini mencegah data leakage di training!
+        - Complexity: O(n) dengan n = offline store size
+        - Untuk production, gunakan time-series database
+          atau data warehouse dengan partitioning.
+        """
+        df = pd.DataFrame(self.offline_store)
         results = []
-        for key in entity_keys:
-            key_tuple = tuple(key) if isinstance(key, list) else (key,)
-            features = self.online_store.get(feature_group, {}).get(key_tuple, {})
-            results.append(features)
-        return pd.DataFrame(results)
-    
-    def get_historical_features(self, feature_group, entity_keys, timestamps):
-        """
-        Get features untuk training dengan point-in-time correctness.
         
-        ⚠️ INI PENTING: Kita harus ambil feature values
-        SEBELUM timestamp tertentu, bukan data terbaru!
-        Ini mencegah data leakage.
-        """
-        df = self.offline_store.get(feature_group, pd.DataFrame())
-        results = []
-        
-        for key, ts in zip(entity_keys, timestamps):
-            # Filter: entity match AND timestamp <= event time
-            entity_col = self.feature_definitions[feature_group]['entities'][0]
-            mask = (df[entity_col] == key) & (df['timestamp'] <= ts)
+        for entity_id, timestamp in zip(entity_ids, timestamps):
+            # Filter: entity match dan timestamp <= requested time
+            mask = (df['entity_id'] == entity_id) & (df['timestamp'] <= timestamp)
+            entity_data = df[mask]
+            
+            if len(entity_data) == 0:
+                results.append({'entity_id': entity_id})
+                continue
             
             # Ambil record terbaru sebelum timestamp
-            matched = df[mask].sort_values('timestamp').iloc[-1:]
-            results.append(matched)
+            latest = entity_data.loc[entity_data['timestamp'].idxmax()]
+            result = {'entity_id': entity_id}
+            for name in feature_names:
+                result[name] = latest.get(name, None)
+            results.append(result)
         
-        return pd.concat(results, ignore_index=True) if results else pd.DataFrame()
+        return pd.DataFrame(results)
+    
+    def get_feature_statistics(self, feature_name: str) -> Dict[str, float]:
+        """
+        Compute statistics untuk feature.
+        
+        Parameters:
+        -----------
+        feature_name : str
+            Feature name.
+            
+        Returns:
+        --------
+        dict
+            Statistics (mean, std, min, max, missing %).
+            
+        Notes:
+        ------
+        - Feature statistics berguna untuk monitoring dan data quality.
+        - Track drift dengan membandingkan statistics over time.
+        - Missing value rate menunjukkan data quality issues.
+        """
+        df = pd.DataFrame(self.offline_store)
+        if feature_name not in df.columns:
+            return {}
+        
+        values = df[feature_name].dropna()
+        return {
+            'mean': values.mean(),
+            'std': values.std(),
+            'min': values.min(),
+            'max': values.max(),
+            'missing_pct': df[feature_name].isna().mean() * 100,
+            'count': len(values)
+        }
 
 
 # ===========================================================
-# 💻 CONTOH: Feature Store untuk E-Commerce
+# BAGIAN 3: Demo Feature Store
 # ===========================================================
+print("\n" + "="*60)
+print("BAGIAN 3: DEMO FEATURE STORE")
+print("="*60)
 
-print("\n" + "="*50)
-print("CONTOH: Feature Store untuk E-Commerce")
-print("="*50)
-
-# Inisialisasi feature store
+# Initialize
 store = SimpleFeatureStore()
 
-# Register feature groups
-store.register_feature_group(
-    name="user_features",
-    features=["age", "total_purchases", "avg_order_value", "days_since_last_purchase"],
-    entities=["user_id"]
-)
+# Register features
+store.register_feature('voltage_rms', 'numeric',
+                       'RMS voltage reading')
+store.register_feature('current_rms', 'numeric',
+                       'RMS current reading')
+store.register_feature('power_factor', 'numeric',
+                       'Power factor')
+store.register_feature('temperature', 'numeric',
+                       'Equipment temperature in Celsius')
+store.register_feature('equipment_type', 'categorical',
+                       'Type of equipment')
 
-store.register_feature_group(
-    name="item_features", 
-    features=["price", "category", "avg_rating", "popularity_score"],
-    entities=["item_id"]
-)
-
-# Generate sample data
-np.random.seed(42)
-n_users = 1000
-
-user_df = pd.DataFrame({
-    'user_id': range(n_users),
-    'timestamp': pd.date_range('2024-01-01', periods=n_users, freq='H'),
-    'age': np.random.randint(18, 65, n_users),
-    'total_purchases': np.random.poisson(10, n_users),
-    'avg_order_value': np.random.exponential(50, n_users).round(2),
-    'days_since_last_purchase': np.random.exponential(30, n_users).round(0)
+# Ingest online (real-time)
+store.ingest_online('motor_001', {
+    'voltage_rms': 220.5,
+    'current_rms': 5.2,
+    'power_factor': 0.92,
+    'temperature': 45.0
 })
 
-item_df = pd.DataFrame({
-    'item_id': range(100),
-    'timestamp': pd.date_range('2024-01-01', periods=100, freq='H'),
-    'price': np.random.exponential(100, 100).round(2),
-    'category': np.random.choice(['electronics', 'clothing', 'food', 'books'], 100),
-    'avg_rating': np.random.uniform(3.0, 5.0, 100).round(1),
-    'popularity_score': np.random.exponential(1000, 100).round(0)
-})
+# Ingest offline (historical)
+now = datetime.now()
+for i in range(10):
+    store.ingest_offline('motor_001', {
+        'voltage_rms': 220 + np.random.randn(),
+        'current_rms': 5 + np.random.randn(),
+        'power_factor': 0.9 + np.random.randn() * 0.05,
+        'temperature': 40 + i * 2 + np.random.randn() * 2
+    }, now - timedelta(hours=i))
 
-# Ingest ke feature store
-store.ingest_batch("user_features", user_df)
-store.ingest_batch("item_features", item_df)
+# Retrieve online
+online_features = store.get_online_features('motor_001',
+    ['voltage_rms', 'current_rms', 'temperature'])
+print(f"\nOnline features: {online_features}")
 
-# Simulasi: serving request (real-time prediction)
-print("\n🚀 Online Feature Serving (for prediction):")
-user_features = store.get_online_features("user_features", entity_keys=[42, 100, 555])
-print(user_features)
+# Retrieve offline dengan point-in-time
+offline_features = store.get_offline_features(
+    ['motor_001'] * 3,
+    ['voltage_rms', 'temperature'],
+    [now - timedelta(hours=i) for i in [1, 3, 5]]
+)
+print(f"\nOffline features (point-in-time):\n{offline_features}")
 
-# Simulasi: training data generation (point-in-time)
-print("\n📚 Historical Features (for training — NO LEAKAGE!):")
-train_keys = [42, 100]
-train_timestamps = pd.to_datetime(['2024-01-10', '2024-01-15'])
-# Note: Contoh ini sederhana, perlu adjust timestamp logic
-
-
-# ===========================================================
-# 📖 BAGIAN 4: Data Versioning dengan DVC
-# ===========================================================
-
-print("""
-╔══════════════════════════════════════════════════════════╗
-║     DATA VERSIONING: DVC (Data Version Control)          ║
-╠══════════════════════════════════════════════════════════╣
-║                                                          ║
-║  Masalah: Dataset berubah, tapi tidak ada versioning!   ║
-║  Solusi: DVC = Git untuk data                            ║
-║                                                          ║
-║  WORKFLOW:                                               ║
-║  ┌─────────┐    ┌─────────┐    ┌─────────┐             ║
-║  │ Raw Data│───▶│ Process │───▶│ Features│             ║
-║  │ (S3)    │    │ Pipeline│    │ (DVC)   │             ║
-║  └─────────┘    └─────────┘    └────┬────┘             ║
-║                                     │                    ║
-║  ┌─────────┐    ┌─────────┐    ┌────▼────┐             ║
-║  │ Git     │◀───│ DVC     │◀───│ .dvc    │             ║
-║  │ (code)  │    │ (data)  │    │  files  │             ║
-║  └─────────┘    └─────────┘    └─────────┘             ║
-║                                                          ║
-║  COMMANDS:                                               ║
-║  $ dvc init                    # Initialize DVC          ║
-║  $ dvc remote add -d myremote s3://bucket/path          ║
-║  $ dvc add data/features.csv   # Track data              ║
-║  $ git add data/features.csv.dvc                         ║
-║  $ git commit -m "Add features v1"                       ║
-║  $ dvc push                    # Upload ke remote        ║
-║                                                          ║
-║  REPRODUCIBILITY:                                        ║
-║  $ dvc repro                     # Re-run pipeline       ║
-║  $ dvc metrics show              # Show metrics          ║
-║  $ dvc params diff               # Compare params        ║
-║                                                          ║
-╚══════════════════════════════════════════════════════════╝
-""")
+# Statistics
+stats = store.get_feature_statistics('temperature')
+print(f"\nTemperature statistics: {stats}")
 
 
 # ===========================================================
-# 🏋️ EXERCISE 1: Build Your Feature Store
+# BAGIAN 4: Feature Engineering Patterns
+# ===========================================================
+print("\n" + "="*60)
+print("BAGIAN 4: FEATURE ENGINEERING PATTERNS")
+print("="*60)
+
+feature_patterns = """
+TARGET TIME-BASED FEATURES:
+
+Window Aggregations:
+  - Rolling mean: mean(X) over last N time units
+  - Rolling std: standard deviation over window
+  - Exponential moving average: weighted average dengan decay
+  
+  EE Connection: moving average = low-pass filter
+
+Lag Features:
+  - X(t-1), X(t-2), ..., X(t-k)
+  - Capture temporal dependencies
+  
+  EE Connection: delay elements di digital filters
+
+Time Since Events:
+  - Time since last maintenance
+  - Time since last failure
+  - Time of day, day of week, season
+
+TARGET DOMAIN-SPECIFIC FEATURES (EE):
+
+Power Systems:
+  - RMS, peak, crest factor
+  - THD (Total Harmonic Distortion)
+  - Power factor, real/reactive power
+  - Voltage unbalance
+  
+  DETAIL:
+  - THD = sqrt(sum(V_h^2)) / V_1, h = 2,3,...
+  - Crest factor = peak / RMS
+  - Power factor = P / |S| = cos(phi)
+
+Signal Processing:
+  - FFT coefficients
+  - Spectral energy per band
+  - Zero crossing rate
+  - Signal entropy
+  
+  DETAIL:
+  - FFT coefficients bisa jadi features untuk classification
+  - Spectral energy = integral dari power spectral density
+  - Zero crossing rate berguna untuk voice activity detection
+
+Control Systems:
+  - Settling time, rise time, overshoot
+  - Steady-state error
+  - Control effort
+
+TARGET FEATURE TRANSFORMATION:
+
+Scaling:
+  - StandardScaler: z-score normalization
+    z = (x - mu) / sigma
+  - MinMaxScaler: scale ke [0, 1]
+    x_scaled = (x - min) / (max - min)
+  - RobustScaler: median dan IQR
+    x_scaled = (x - median) / IQR
+    Lebih robust terhadap outlier.
+
+Encoding:
+  - One-hot: categorical dengan few categories
+  - Target encoding: categorical dengan many categories
+    replace category dengan mean target value
+  - Embedding: learnable representations
+    Digunakan di deep learning untuk high-cardinality categories.
+
+Interaction:
+  - X1 * X2 (multiplicative)
+  - X1 / X2 (ratio)
+  - X1^2, sqrt(X1) (non-linear)
+
+TARGET FEATURE SELECTION:
+
+Filter Methods:
+  - Correlation: remove highly correlated features
+  - Mutual Information: relevance to target
+  - Statistical tests: chi-square, ANOVA
+  
+  DETAIL:
+  - Filter methods cepat dan scalable
+  - Tapi tidak mempertimbangkan interaksi antar features
+
+Wrapper Methods:
+  - Forward selection: add features one by one
+  - Backward elimination: remove features one by one
+  - Recursive Feature Elimination (RFE)
+  
+  DETAIL:
+  - Wrapper methods lebih akurat tapi computationally expensive
+  - Bergantung pada model performance
+
+Embedded Methods:
+  - Lasso: L1 regularization (sparse)
+  - Tree importance: feature importance dari random forest
+  - Permutation importance: shuffle dan measure impact
+  
+  DETAIL:
+  - Permutation importance adalah gold standard
+    untuk interpretasi feature importance.
+  - Shuffle satu feature, measure performance drop.
+"""
+print(feature_patterns)
+
+
+# ===========================================================
+# LATIHAN 22: Build Feature Store
 # ===========================================================
 """
-Bangun feature store untuk domain EE / Signal Processing:
+TARGET Learning Objectives:
+   - Membangun feature store untuk use case tertentu
+   - Mengimplementasikan point-in-time correctness
+   - Membuat feature transformation pipeline
 
-Feature Groups:
-1. sensor_features
-   - Entities: sensor_id
-   - Features: avg_voltage_1h, max_current_1h, thd_1h, 
-               temperature, vibration_rms
-               
-2. equipment_features
-   - Entities: equipment_id
-   - Features: age_days, last_maintenance_days, 
-               failure_count_1y, manufacturer
-               
-3. operational_features
-   - Entities: [sensor_id, timestamp]
-   - Features: load_factor, ambient_temp, humidity
+PANDUAN LANGKAH-LANGKAH:
 
-Tugas:
-1. Register semua feature groups
-2. Generate synthetic data (1000 sensors, 30 days)
-3. Implementasi get_online_features untuk real-time prediction
-4. Implementasi get_historical_features dengan point-in-time
-5. Validasi: pastikan tidak ada data leakage!
+STEP 1: Design Feature Store untuk Use Case
+-------------------------------------------
+   Pilih use case:
+   
+   a) Predictive Maintenance:
+      - Entities: equipment_id
+      - Features: sensor readings, operational hours, maintenance history
+      - Online: current status untuk real-time monitoring
+      - Offline: historical untuk training failure prediction
+      
+   b) Recommendation System:
+      - Entities: user_id, item_id
+      - Features: user behavior, item metadata, interaction history
+      - Online: real-time personalization
+      - Offline: batch model training
+      
+   c) Fraud Detection:
+      - Entities: transaction_id, user_id, device_id
+      - Features: transaction amount, velocity, device fingerprint
+      - Online: real-time scoring
+      - Offline: historical analysis
 
-Bonus:
-- Tambahkan data quality checks (missing values, range checks)
-- Simulasi latency test untuk online serving
+
+STEP 2: Implement Core Functionality
+------------------------------------
+   a) Feature registration dan versioning
+   b) Online ingestion dan serving
+   c) Offline ingestion dengan timestamps
+   d) Point-in-time retrieval
+   e) Feature statistics dan monitoring
+   
+   TIPS KENAPA versioning?
+     - Features bisa berubah over time
+     - Model trained dengan v1, serving dengan v1
+     - New model trained dengan v2
+     - Backward compatibility
+
+
+STEP 3: Feature Transformation Pipeline
+---------------------------------------
+   a) Define transformations:
+      - Scaling: StandardScaler, MinMaxScaler
+      - Encoding: OneHotEncoder, TargetEncoder
+      - Aggregation: rolling mean, cumulative sum
+      - Domain-specific: THD, crest factor, power factor
+      
+   b) Pipeline execution:
+      - Raw data -> Transformation -> Store
+      - Reproducible: same raw data -> same features
+      - Versioned: transformations punya version
+      
+   c) Testing:
+      - Unit tests untuk setiap transformation
+      - Integration tests untuk pipeline
+      - Data quality checks
+
+
+STEP 4: Integration dengan Model Training
+-----------------------------------------
+   a) Generate training dataset:
+      - Specify: entity_ids, timestamps, feature_names
+      - Retrieve: point-in-time correct features
+      - Join dengan labels
+      
+   b) Point-in-time correctness validation:
+      - Features dari waktu sebelum label
+      - No data leakage
+      - Reproducible
+      
+   c) Training pipeline:
+      - Feature retrieval -> Model training -> Model evaluation
+      - Automated dengan Airflow/Prefect
+      - Track lineage: model -> features -> raw data
+
+
+TIPS:
+   - Point-in-time: feature_timestamp <= label_timestamp
+   - Versioning: feature_name:v1, feature_name:v2
+   - Backfill: compute historical features untuk new features
+   - Monitoring: track feature distributions dan drift
+   - Metadata: document setiap feature dengan owner, description
+
+PERINGATAN COMMON MISTAKES:
+   - Data leakage: features dari waktu setelah label
+   - Tidak version features
+   - Missing data tanpa proper handling
+   - Feature computation yang tidak reproducible
+   - No monitoring untuk feature drift
+
+TARGET EXPECTED OUTPUT:
+   - Feature store dengan online dan offline stores
+   - Point-in-time correct feature retrieval
+   - Feature transformation pipeline
+   - Integration dengan model training
+   - Feature monitoring dan statistics
 """
 
 
 # ===========================================================
-# 🏋️ EXERCISE 2: DVC Pipeline
+# CHALLENGE: Production Feature Store
 # ===========================================================
 """
-Buat DVC pipeline untuk project kamu:
+TARGET Learning Objectives:
+   - Membangun production-ready feature store
+   - Mengintegrasikan dengan existing data infrastructure
+   - Implementasi monitoring dan governance
 
-1. Buat dvc.yaml:
-   stages:
-     prepare:
-       cmd: python src/prepare.py
-       deps:
-         - data/raw.csv
-         - src/prepare.py
-       outs:
-         - data/processed.csv
-     
-     feature_engineering:
-       cmd: python src/features.py
-       deps:
-         - data/processed.csv
-         - src/features.py
-       outs:
-         - data/features.csv
-     
-     train:
-       cmd: python src/train.py
-       deps:
-         - data/features.csv
-         - src/train.py
-       params:
-         - config/model.yaml:
-             - learning_rate
-             - epochs
-       metrics:
-         - metrics.json:
-             - accuracy
-             - f1_score
-       outs:
-         - models/model.pkl
+PANDUAN LANGKAH-LANGKAH:
 
-2. Jalankan: dvc repro
-3. Ganti hyperparameter, jalankan lagi
-4. Bandingkan: dvc metrics diff
-5. Push ke remote: dvc push
+STEP 1: Architecture Design
+---------------------------
+   Design feature store untuk manufacturing company:
+   
+   Data Sources:
+   - SCADA systems (real-time sensors)
+   - ERP systems (maintenance records, equipment specs)
+   - Quality systems (inspection results)
+   - External (weather, market data)
+   
+   Users:
+   - Data Scientists (training data)
+   - ML Engineers (feature serving)
+   - Analysts (feature exploration)
+   - Operations (monitoring)
+
+
+STEP 2: Implementation
+----------------------
+   a) Online Store (Redis):
+      - Key: equipment_id
+      - Value: JSON dengan latest features
+      - TTL: 24 hours
+      - Latency: < 5ms
+      
+   b) Offline Store (BigQuery/Snowflake):
+      - Table: features dengan partition by date
+      - Schema: entity_id, timestamp, feature_1, ..., feature_n
+      - Backfill: 2 years historical data
+      
+   c) Feature Computation (Spark/Flink):
+      - Batch: nightly computation untuk historical
+      - Streaming: real-time computation untuk online
+      - Transformations: defined sebagai code
+      
+   d) API Layer (FastAPI):
+      - /features/online: real-time retrieval
+      - /features/offline: batch retrieval
+      - /features/statistics: feature monitoring
+      - /features/register: new feature registration
+
+
+STEP 3: Monitoring & Governance
+-------------------------------
+   a) Feature Monitoring:
+      - Distribution tracking (mean, std, percentiles)
+      - Drift detection (PSI, KS test)
+      - Missing value rate
+      - Latency monitoring
+      
+   b) Data Quality:
+      - Schema validation
+      - Range checks
+      - Freshness checks
+      - Anomaly detection
+      
+   c) Governance:
+      - Feature ownership
+      - Access control
+      - Lineage tracking
+      - Documentation
+
+
+STEP 4: Integration
+-------------------
+   a) Model Training:
+      - Automated dataset generation
+      - Point-in-time correctness
+      - Feature versioning
+      
+   b) Model Serving:
+      - Real-time feature lookup
+      - Feature caching
+      - Fallback untuk missing features
+      
+   c) Monitoring:
+      - Feature drift alerts
+      - Performance degradation alerts
+      - Data quality alerts
+
+
+TIPS:
+   - Redis: hashes untuk features per entity
+   - BigQuery: partitioned tables untuk query performance
+   - Spark: DataFrame API untuk transformations
+   - FastAPI: async endpoints untuk concurrent requests
+   - Monitoring: Prometheus + Grafana
+
+PERINGATAN COMMON MISTAKES:
+   - Online dan offline inconsistency
+   - No point-in-time correctness
+   - Feature drift tanpa detection
+   - No fallback untuk missing features
+   - Scalability issues (single point of failure)
+   - No data lineage tracking
+
+TARGET EXPECTED OUTPUT:
+   - Production feature store architecture
+   - Working implementation dengan Redis + BigQuery
+   - Feature monitoring dashboard
+   - Data quality checks
+   - Integration documentation
+
+Ini adalah fondasi untuk MLOps di production!
 """
-
-
-# ===========================================================
-# 🔥 CHALLENGE: Production-Ready Feature Pipeline
-# ===========================================================
-"""
-Bangun feature pipeline production-ready:
-
-Requirements:
-1. Batch feature computation (daily schedule)
-2. Streaming feature computation (real-time events)
-3. Feature validation (Great Expectations / Pandera)
-4. Feature serving API (FastAPI)
-5. Feature monitoring (drift detection)
-
-Arsitektur:
-┌──────────┐    ┌──────────┐    ┌──────────┐
-│  Kafka   │───▶│ Streaming│───▶│  Online  │
-│  Events  │    │ Features │    │  Store   │
-└──────────┘    └──────────┘    └──────────┘
-                                     ▲
-┌──────────┐    ┌──────────┐    ┌────┴───┐
-│ Data Lake│───▶│  Batch   │───▶│ Offline│
-│ (Parquet)│    │ Features │    │ Store  │
-└──────────┘    └──────────┘    └────────┘
-
-Deliverable:
-- Code repository dengan README
-- Feature definitions dan metadata
-- API documentation
-- Monitoring dashboard (Streamlit)
-"""
-
 
 print("\n" + "="*50)
-print("✅ Modul selesai! Lanjut ke: 08-production-ml/02_model_monitoring.py")
+print("OK Modul selesai! Lanjut ke: 08-production-ml/02_model_monitoring.py")
 print("="*50)
