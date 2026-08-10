@@ -43,6 +43,7 @@
 - **Rule 5 — Hari Rest = istirahat beneran.** Kalau tertinggal, baru pakai hari rest untuk catch-up.
 - **Rule 6 — Catatan dalam Bahasa Indonesia**, istilah kode tetap Inggris.
 - **Rule 7 — Tiap akhir fase: review + push ke GitHub** (fase harus "hijau" dulu sebelum lanjut).
+- **Rule 8 — Jangan ketik ulang semua kode.** Contoh teori (`📖`) cukup dibaca + dijalankan + dimodifikasi kecil. Yang **wajib ditulis sendiri**: semua fungsi exercise (`🏋️`) dan implementasi inti model dari nol (regresi, NN, CNN, attention). Trik paling efektif: setelah baca & jalankan, **tutup file lalu tulis ulang dari ingatan** — kalau bisa tanpa lihat, berarti kamu paham.
 
 ---
 
