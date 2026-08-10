@@ -755,7 +755,7 @@ print(f"  Random pred loss:  {binary_cross_entropy(y_true, y_pred_bad):.4f}")
 
 
 # ===========================================================
-# LATIHAN EXERCISE 1: Implementasi Fungsi-fungsi Berikut
+# 🏋️ EXERCISE 1: Implementasi Fungsi-fungsi Berikut
 # ===========================================================
 """
 TARGET Learning Objectives:
@@ -882,43 +882,86 @@ PERINGATAN COMMON MISTAKES:
    - Lupa reshape labels untuk indexing 2D di one-hot encoding
    - Menggunakan (labels,) indexing yang salah -> gunakan np.arange(len(labels))
 
-TEST TEST CASES (uncomment setelah implementasi):
+   CARA MENJALANKAN TEST:  python 01_numpy_essentials.py --exercise
 """
 
-# def batch_normalize(X):
-#     # TODO: implementasi di sini
-#     pass
 
-# def cosine_similarity(a, b):
-#     # TODO: implementasi di sini
-#     pass
+# --- Implementasi kamu (isi bagian TODO di bawah ini) ---
+def batch_normalize(X):
+    """
+    Normalisasi per kolom: X_norm = (X - mean) / std.
+    Input (N, D), output (N, D) dengan mean=0, std=1 per kolom.
 
-# def one_hot_encode(labels, num_classes):
-#     # TODO: implementasi di sini
-#     pass
+    Tips: X.mean(axis=0), X.std(axis=0), tambahkan epsilon kecil
+    agar tidak terjadi division by zero saat std = 0.
+    """
+    # TODO: implementasi di sini
+    raise NotImplementedError("Implementasi batch_normalize dulu!")
 
-# --- Test (uncomment setelah implementasi) ---
-# X_test = np.random.randn(50, 3)
-# X_norm = batch_normalize(X_test)
-# assert np.allclose(X_norm.mean(axis=0), 0, atol=1e-10), "Mean harus ~0"
-# assert np.allclose(X_norm.std(axis=0), 1, atol=1e-10), "Std harus ~1"
-# print("OK batch_normalize passed!")
 
-# a = np.array([1, 0, 0])
-# b = np.array([0, 1, 0])
-# assert abs(cosine_similarity(a, b)) < 1e-10, "Orthogonal vectors harus cos=0"
-# assert abs(cosine_similarity(a, a) - 1.0) < 1e-10, "Same vector harus cos=1"
-# print("OK cosine_similarity passed!")
+def cosine_similarity(a, b):
+    """
+    cos(theta) = (a . b) / (||a|| * ||b||). Output skalar antara -1 dan 1.
 
-# labels = np.array([0, 2, 1, 0])
-# oh = one_hot_encode(labels, 3)
-# expected = np.array([[1,0,0],[0,0,1],[0,1,0],[1,0,0]])
-# assert np.array_equal(oh, expected), f"Expected:\n{expected}\nGot:\n{oh}"
-# print("OK one_hot_encode passed!")
+    Tips: np.dot(a, b) dan np.linalg.norm(a).
+    Hati-hati division by zero jika salah satu vektor adalah zero vector.
+    """
+    # TODO: implementasi di sini
+    raise NotImplementedError("Implementasi cosine_similarity dulu!")
+
+
+def one_hot_encode(labels, num_classes):
+    """
+    Ubah label integer -> matrix one-hot dengan shape (N, num_classes).
+
+    Tips: result[np.arange(N), labels] = 1
+    """
+    # TODO: implementasi di sini
+    raise NotImplementedError("Implementasi one_hot_encode dulu!")
 
 
 # ===========================================================
-# CHALLENGE CHALLENGE: Numerical Computing dengan NumPy
+# 🧪 TEST RUNNER: Cek jawaban secara otomatis (PASS/FAIL)
+# ===========================================================
+# Jalankan:  python 01_numpy_essentials.py --exercise
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "..", "00-setup"))
+from exercise_utils import safe_check, summary, run_exercise_mode
+
+
+def run_exercise_tests():
+    print("\n" + "=" * 50)
+    print("🧪 Menjalankan test exercise...")
+    print("=" * 50)
+
+    X_test = np.random.randn(50, 3)
+    safe_check("batch_normalize: mean ~ 0 per kolom",
+               lambda: np.allclose(batch_normalize(X_test).mean(axis=0), 0, atol=1e-10))
+    safe_check("batch_normalize: std ~ 1 per kolom",
+               lambda: np.allclose(batch_normalize(X_test).std(axis=0), 1, atol=1e-10))
+
+    a = np.array([1, 0, 0])
+    b = np.array([0, 1, 0])
+    safe_check("cosine_similarity: vektor orthogonal ~ 0",
+               lambda: abs(cosine_similarity(a, b)) < 1e-10)
+    safe_check("cosine_similarity: vektor identik ~ 1",
+               lambda: abs(cosine_similarity(a, a) - 1.0) < 1e-10)
+
+    labels = np.array([0, 2, 1, 0])
+    expected = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0], [1, 0, 0]])
+    safe_check("one_hot_encode: output benar",
+               lambda: np.array_equal(one_hot_encode(labels, 3), expected))
+
+    summary()
+
+
+if run_exercise_mode():
+    run_exercise_tests()
+
+
+# ===========================================================
+# 🔥 CHALLENGE: Numerical Computing dengan NumPy
 # ===========================================================
 """
 TARGET Learning Objectives:

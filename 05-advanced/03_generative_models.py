@@ -741,7 +741,7 @@ TARGET EXPECTED OUTPUT:
 
 
 # ===========================================================
-# CHALLENGE: Synthetic Data Generation untuk Power Systems
+# 🔥 CHALLENGE: Synthetic Data Generation untuk Power Systems
 # ===========================================================
 """
 TARGET Learning Objectives:

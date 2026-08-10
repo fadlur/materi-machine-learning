@@ -570,7 +570,7 @@ TARGET EXPECTED OUTPUT:
 
 
 # ===========================================================
-# CHALLENGE: Transformer untuk Fault Report Classification
+# 🔥 CHALLENGE: Transformer untuk Fault Report Classification
 # ===========================================================
 """
 TARGET Learning Objectives:

@@ -1,6 +1,6 @@
 """
 =============================================================
-FASE 8 - MODUL 3: LLM ENGINEERING
+FASE 7 - MODUL 3: LLM ENGINEERING
 =============================================================
 LLM (Large Language Models) merevolusi AI landscape di 2023-2026.
 Sebagai ML Engineer, kamu perlu memahami:
@@ -799,7 +799,7 @@ TARGET EXPECTED OUTPUT:
 
 
 # ===========================================================
-# CHALLENGE: Production LLM System
+# 🔥 CHALLENGE: Production LLM System
 # ===========================================================
 """
 TARGET Learning Objectives:
@@ -943,7 +943,7 @@ Master ini dan kamu akan sangat valuable.
 """
 
 print("\n" + "="*50)
-print("SELESAI FASE 8!")
+print("SELESAI FASE 7!")
 print("="*50)
 print("""
 Kamu sekarang bisa:
@@ -952,15 +952,6 @@ OK Build model monitoring dan drift detection
 OK Develop LLM-powered applications
 OK Deploy production ML systems
 
-SELESAI!
-
-Kamu telah menyelesaikan seluruh kurikulum ML Engineer Track!
-
-Next steps:
-1. Review semua projects di folder projects/
-2. Build portfolio dengan 3+ end-to-end projects
-3. Apply untuk ML Engineer roles
-4. Continue learning - ML field evolves rapidly!
-
-Good luck!
+Lanjut ke Fase 8: Career Preparation
+  -> 08-career-prep/01_ml_interview_prep.py
 """)

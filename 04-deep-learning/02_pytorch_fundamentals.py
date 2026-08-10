@@ -522,7 +522,7 @@ TARGET EXPECTED OUTPUT:
 
 
 # ===========================================================
-# CHALLENGE: Optimizer from Scratch
+# 🔥 CHALLENGE: Optimizer from Scratch
 # ===========================================================
 """
 TARGET Learning Objectives:

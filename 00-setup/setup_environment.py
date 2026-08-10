@@ -350,8 +350,8 @@ def main():
     |-- 04-deep-learning/              <- Neural nets & PyTorch
     |-- 05-advanced/                   <- Transfer learning, NLP, Generative
     |-- 06-expert/                     <- Paper impl, MLOps, Production
-    |-- 07-career-prep/                <- Interview, Resume, System Design <- NEW
-    |-- 08-production-ml/              <- Feature Store, Monitoring, LLM <- NEW
+    |-- 07-production-ml/              <- Feature Store, Monitoring, LLM <- NEW
+    |-- 08-career-prep/                <- Interview, Resume, System Design <- NEW
     |-- projects/                      <- Proyek mandiri (portfolio!)
     """)
 

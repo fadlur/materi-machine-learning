@@ -1,6 +1,6 @@
 """
 =============================================================
-FASE 7 - MODUL 2: ML SYSTEM DESIGN
+FASE 8 - MODUL 2: ML SYSTEM DESIGN
 =============================================================
 System design interview = mendesain end-to-end ML system
 untuk problem yang realistis.
@@ -620,7 +620,7 @@ Practice makes perfect!
 
 
 # ===========================================================
-# CHALLENGE: Design Production ML System
+# 🔥 CHALLENGE: Design Production ML System
 # ===========================================================
 """
 TARGET Learning Objectives:
@@ -753,5 +753,5 @@ Ini adalah kunci untuk memenangkan system design interview!
 """
 
 print("\n" + "="*50)
-print("OK Modul selesai! Lanjut ke: 07-career-prep/03_resume_portfolio_guide.py")
+print("OK Modul selesai! Lanjut ke: 08-career-prep/03_resume_portfolio_guide.py")
 print("="*50)

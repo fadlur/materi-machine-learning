@@ -1,6 +1,6 @@
 """
 =============================================================
-FASE 8 - MODUL 1: FEATURE STORES
+FASE 7 - MODUL 1: FEATURE STORES
 =============================================================
 Feature Store = centralized storage untuk features yang
 digunakan oleh ML models.
@@ -641,7 +641,7 @@ TARGET EXPECTED OUTPUT:
 
 
 # ===========================================================
-# CHALLENGE: Production Feature Store
+# 🔥 CHALLENGE: Production Feature Store
 # ===========================================================
 """
 TARGET Learning Objectives:
@@ -758,5 +758,5 @@ Ini adalah fondasi untuk MLOps di production!
 """
 
 print("\n" + "="*50)
-print("OK Modul selesai! Lanjut ke: 08-production-ml/02_model_monitoring.py")
+print("OK Modul selesai! Lanjut ke: 07-production-ml/02_model_monitoring.py")
 print("="*50)

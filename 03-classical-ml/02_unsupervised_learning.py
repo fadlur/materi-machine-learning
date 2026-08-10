@@ -562,7 +562,7 @@ TARGET EXPECTED OUTPUT:
 
 
 # ===========================================================
-# CHALLENGE: Anomaly Detection untuk Power Quality
+# 🔥 CHALLENGE: Anomaly Detection untuk Power Quality
 # ===========================================================
 """
 TARGET Learning Objectives:

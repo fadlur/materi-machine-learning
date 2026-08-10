@@ -550,7 +550,7 @@ Ini adalah fondasi untuk menjadi ML Engineer expert!
 
 
 # ===========================================================
-# CHALLENGE: End-to-End Production System
+# 🔥 CHALLENGE: End-to-End Production System
 # ===========================================================
 """
 TARGET Learning Objectives:
@@ -673,5 +673,5 @@ membuktikan bahwa kamu bisa deliver production ML systems!
 """
 
 print("\n" + "="*50)
-print("OK Modul selesai! Lanjut ke: 07-career-prep/01_ml_interview_prep.py")
+print("OK Modul selesai! Lanjut ke: 07-production-ml/01_feature_stores.py")
 print("="*50)

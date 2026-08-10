@@ -840,7 +840,7 @@ TARGET EXPECTED OUTPUT:
 
 
 # ===========================================================
-# CHALLENGE: Benchmarking Framework
+# 🔥 CHALLENGE: Benchmarking Framework
 # ===========================================================
 """
 TARGET Learning Objectives:

@@ -510,7 +510,7 @@ TARGET EXPECTED OUTPUT:
 
 
 # ===========================================================
-# CHALLENGE: Multi-class Sensor Fault Classification
+# 🔥 CHALLENGE: Multi-class Sensor Fault Classification
 # ===========================================================
 """
 TARGET Learning Objectives:

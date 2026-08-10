@@ -939,7 +939,7 @@ TARGET EXPECTED OUTPUT:
 
 
 # ===========================================================
-# CHALLENGE: Gradient Descent Visualizer
+# 🔥 CHALLENGE: Gradient Descent Visualizer
 # ===========================================================
 """
 TARGET Learning Objectives:

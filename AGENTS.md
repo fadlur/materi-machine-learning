@@ -10,6 +10,7 @@
 Proyek ini adalah **kurikulum pembelajaran mandiri Machine Learning (ML)** yang disusun secara bertahap dari nol hingga level produksi. Target pengguna adalah seseorang dengan latar belakang S2 Teknik Elektro yang sedang transisi ke bidang ML/AI.
 
 **Versi ini di-optimasi untuk ML/AI Engineer track** dengan fokus pada:
+
 - Job-readiness dalam 90 hari
 - MLOps & production skills (leverage backend experience)
 - LLM Engineering (tren 2025-2026)
@@ -17,10 +18,11 @@ Proyek ini adalah **kurikulum pembelajaran mandiri Machine Learning (ML)** yang 
 - Portfolio production-ready
 
 **Filosofi utama:**
-- *Build First, Library Later* — bangun algoritma dari nol dengan NumPy sebelum menggunakan library seperti scikit-learn atau PyTorch.
-- *Deliberate Practice* — setiap modul berisi latihan yang TIDAK ada jawabannya di tutorial.
-- *Project-Driven* — setiap fase diakhiri dengan proyek mandiri (open-ended).
-- *Debug > Run* — sengaja ada kode yang perlu diperbaiki, karena debugging = belajar.
+
+- _Build First, Library Later_ — bangun algoritma dari nol dengan NumPy sebelum menggunakan library seperti scikit-learn atau PyTorch.
+- _Deliberate Practice_ — setiap modul berisi latihan yang TIDAK ada jawabannya di tutorial.
+- _Project-Driven_ — setiap fase diakhiri dengan proyek mandiri (open-ended).
+- _Debug > Run_ — sengaja ada kode yang perlu diperbaiki, karena debugging = belajar.
 
 **Estimasi waktu:** ~90 hari (sprint intensif, 6-8 jam/hari).
 
@@ -34,7 +36,8 @@ Proyek ini adalah **kurikulum pembelajaran mandiri Machine Learning (ML)** yang 
 ├── AGENTS.md                      ← File ini
 ├── 90-day-action-plan.md          ← Jadwal harian 90 hari ← NEW
 ├── 00-setup/                      ← Setup environment & cek dependensi
-│   └── setup_environment.py       ← (Updated with MLOps & LLM packages)
+│   ├── setup_environment.py       ← (Updated with MLOps & LLM packages)
+│   └── exercise_utils.py          ← Helper test PASS/FAIL (mode --exercise)
 ├── 01-fondasi-data/               ← Fase 1: NumPy, Pandas, Visualisasi
 │   ├── 01_numpy_essentials.py
 │   ├── 02_pandas_essentials.py
@@ -59,23 +62,25 @@ Proyek ini adalah **kurikulum pembelajaran mandiri Machine Learning (ML)** yang 
 │   └── 03_generative_models.py
 ├── 06-expert/                     ← Fase 6: Paper impl, MLOps, Production, LLM ← UPDATED
 │   └── 01_expert_roadmap.py
-├── 07-career-prep/                ← Fase 7: Interview prep & system design ← NEW
-│   ├── 01_ml_interview_prep.py
-│   ├── 02_ml_system_design.py
-│   └── 03_resume_portfolio_guide.py
-├── 08-production-ml/              ← Fase 8: Feature stores, monitoring, LLM ops ← NEW
+├── 07-production-ml/              ← Fase 7: Feature stores, monitoring, LLM ops ← NEW
 │   ├── 01_feature_stores.py
 │   ├── 02_model_monitoring.py
 │   └── 03_llm_engineering.py
+├── 08-career-prep/                ← Fase 8: Interview prep & system design ← NEW
+│   ├── 01_ml_interview_prep.py
+│   ├── 02_ml_system_design.py
+│   └── 03_resume_portfolio_guide.py
 └── projects/                      ← Proyek mandiri (portfolio)
     ├── project_01_eda_prediksi/   ← (Updated with API requirements)
     ├── project_02_klasifikasi_sinyal/  ← (Updated with MLOps requirements)
     ├── project_03_computer_vision/     ← (Updated with Docker requirements)
     ├── project_04_nlp_pipeline/        ← (Updated with deployment requirements)
     └── project_05_end_to_end/          ← (MAJOR UPDATE — FLAGSHIP project)
+└── solutions/                     ← Referensi jawaban exercise (buka jika buntu)
 ```
 
 ### Pola Penamaan File
+
 - File modul: `{nomor_urut}_{nama_modul_snake_case}.py`
 - File proyek: `README.md` di dalam folder `projects/project_{NN}_{nama_proyek}/`
 - Output visualisasi: disimpan sebagai `.png` dengan nama deskriptif (contoh: `01_loss_curve.png`, `02_overfitting_demo.png`).
@@ -84,19 +89,19 @@ Proyek ini adalah **kurikulum pembelajaran mandiri Machine Learning (ML)** yang 
 
 ## 3. Technology Stack (Updated)
 
-| Kategori | Library / Tool |
-|----------|----------------|
-| Bahasa | Python 3.10+ |
-| Data & Array | NumPy, Pandas |
-| Visualisasi | Matplotlib, Seaborn, Plotly |
-| Classical ML | scikit-learn, XGBoost, LightGBM |
-| Deep Learning | PyTorch, torchvision, torchaudio |
-| NLP / LLM | Hugging Face `transformers`, `datasets`, LangChain, OpenAI API |
-| MLOps | MLflow, Weights & Biases, DVC, Hydra |
-| Deployment | FastAPI, Docker, GitHub Actions |
-| Monitoring | Evidently AI, Prometheus (basic) |
-| Cloud (opsional) | AWS SageMaker / GCP Vertex AI |
-| Environment | VS Code + Jupyter Interactive |
+| Kategori         | Library / Tool                                                 |
+| ---------------- | -------------------------------------------------------------- |
+| Bahasa           | Python 3.10+                                                   |
+| Data & Array     | NumPy, Pandas                                                  |
+| Visualisasi      | Matplotlib, Seaborn, Plotly                                    |
+| Classical ML     | scikit-learn, XGBoost, LightGBM                                |
+| Deep Learning    | PyTorch, torchvision, torchaudio                               |
+| NLP / LLM        | Hugging Face `transformers`, `datasets`, LangChain, OpenAI API |
+| MLOps            | MLflow, Weights & Biases, DVC, Hydra                           |
+| Deployment       | FastAPI, Docker, GitHub Actions                                |
+| Monitoring       | Evidently AI, Prometheus (basic)                               |
+| Cloud (opsional) | AWS SageMaker / GCP Vertex AI                                  |
+| Environment      | VS Code + Jupyter Interactive                                  |
 
 **Tidak ada file konfigurasi build** seperti `pyproject.toml`, `setup.py`, `requirements.txt`, atau `Makefile` di root level.  
 Dependensi di-install secara manual via `pip` (lihat `00-setup/setup_environment.py` untuk daftar lengkap).
@@ -106,21 +111,27 @@ Dependensi di-install secara manual via `pip` (lihat `00-setup/setup_environment
 ## 4. Cara Menjalankan
 
 ### 4.1 Cek Environment
+
 ```bash
 cd 00-setup
 python setup_environment.py
 ```
+
 Script ini memeriksa versi Python dan keberadaan package utama. Jika ada yang kurang, akan dicetak perintah install.
 
 ### 4.2 Menjalankan Modul
+
 Setiap file `.py` bisa dijalankan langsung:
+
 ```bash
 cd 01-fondasi-data
 python 01_numpy_essentials.py
 ```
+
 Atau dijalankan secara interaktif di VS Code / Jupyter.
 
 ### 4.3 Menjalankan Proyek
+
 Setiap folder di `projects/` berisi `README.md` dengan checklist deliverables.  
 Proyek dijalankan sebagai notebook/script mandiri, bukan sebagai package yang di-import.
 
@@ -129,11 +140,13 @@ Proyek dijalankan sebagai notebook/script mandiri, bukan sebagai package yang di
 ## 5. Gaya Kode & Konvensi
 
 ### 5.1 Bahasa
+
 - **Semua komentar, docstring, dan dokumentasi ditulis dalam Bahasa Indonesia.**
 - Nama variabel dan fungsi menggunakan Bahasa Inggris (konvensi Python umum).
 - Gunakan istilah Teknik Elektro untuk menjelaskan konsep ML (misal: "gradient descent = steepest descent optimization", "CNN convolution = konvolusi di DSP").
 
 ### 5.2 Struktur Setiap File Modul
+
 Setiap file `.py` mengikuti pola yang konsisten:
 
 ```python
@@ -173,6 +186,7 @@ print("="*50)
 ```
 
 ### 5.3 Aturan Penulisan Kode
+
 - Gunakan **class-based implementation** untuk model ML (contoh: `LinearRegressionClosedForm`, `NeuralNetwork`).
 - Setiap class harus memiliki method `fit`, `predict`, dan (jika relevan) `score`.
 - Sertakan **visualisasi** untuk setiap hasil utama (loss curve, decision boundary, confusion matrix, dll).
@@ -181,6 +195,7 @@ print("="*50)
 - Komentar penjelasan teori diletakkan di **atas** blok kode, bukan di samping.
 
 ### 5.4 Penandaan Visual dalam Kode
+
 - `📖` — Bagian teori & contoh
 - `🏋️` — Exercise (latihan wajib)
 - `🔥` — Challenge (tantangan open-ended)
@@ -193,17 +208,17 @@ print("="*50)
 
 ## 6. Organisasi Konten per Fase
 
-| Fase | Topik | File Utama |
-|------|-------|------------|
-| 0 | Setup environment | `00-setup/setup_environment.py` |
-| 1 | NumPy, Pandas, Matplotlib/Seaborn | `01-fondasi-data/*.py` |
-| 2 | Linear/Logistic Regression, GD, Evaluasi | `02-ml-dari-nol/*.py` |
-| 3 | Supervised (sklearn), Unsupervised, Feature Engineering | `03-classical-ml/*.py` |
-| 4 | NN from scratch, PyTorch, CNN, RNN/LSTM | `04-deep-learning/*.py` |
-| 5 | Transfer Learning, Transformers, VAE/GAN | `05-advanced/*.py` |
-| 6 | Paper implementation, MLOps, Production, LLM | `06-expert/01_expert_roadmap.py` |
-| 7 | ML Coding Interview, System Design, Resume | `07-career-prep/*.py` |
-| 8 | Feature Stores, Monitoring, LLM Engineering | `08-production-ml/*.py` |
+| Fase | Topik                                                   | File Utama                       |
+| ---- | ------------------------------------------------------- | -------------------------------- |
+| 0    | Setup environment                                       | `00-setup/setup_environment.py`  |
+| 1    | NumPy, Pandas, Matplotlib/Seaborn                       | `01-fondasi-data/*.py`           |
+| 2    | Linear/Logistic Regression, GD, Evaluasi                | `02-ml-dari-nol/*.py`            |
+| 3    | Supervised (sklearn), Unsupervised, Feature Engineering | `03-classical-ml/*.py`           |
+| 4    | NN from scratch, PyTorch, CNN, RNN/LSTM                 | `04-deep-learning/*.py`          |
+| 5    | Transfer Learning, Transformers, VAE/GAN                | `05-advanced/*.py`               |
+| 6    | Paper implementation, MLOps, Production, LLM            | `06-expert/01_expert_roadmap.py` |
+| 7    | Feature Stores, Monitoring, LLM Engineering             | `07-production-ml/*.py`          |
+| 8    | ML Coding Interview, System Design, Resume              | `08-career-prep/*.py`            |
 
 ---
 
@@ -218,8 +233,14 @@ Proyek ini **tidak menggunakan framework unit testing formal** (tidak ada `pytes
 2. **Visual inspection** — plot disimpan sebagai `.png` dan diperiksa secara visual.
 3. **Metric comparison** — bandingkan hasil model scratch dengan library (contoh: LinearRegression dari nol vs `sklearn.linear_model.LinearRegression`).
 4. **Reproducibility check** — jalankan ulang dan pastikan output sama (seed = 42).
+5. **Automated exercise feedback** — untuk exercise yang menghasilkan fungsi verifiable, gunakan `00-setup/exercise_utils.py` dengan pola:
+   - Fungsi exercise didefinisikan live (bukan di-comment) dan me-raise `NotImplementedError` jika belum diisi.
+   - Test dijalankan lewat flag `--exercise`: `python <modul>.py --exercise`
+   - `safe_check()` menangkap `NotImplementedError` dan melaporkan FAIL tanpa crash → feedback PASS/FAIL yang jelas.
+   - Contoh lengkap: `01-fondasi-data/01_numpy_essentials.py` dan referensi di `solutions/01_numpy_solutions.py`.
 
 Jika kamu menambahkan fitur baru, pastikan:
+
 - Kode bisa di-run tanpa error.
 - Output numerik masuk akal (tidak `NaN` atau `inf` kecuali sengaja).
 - Plot tersimpan dengan benar.
@@ -230,13 +251,13 @@ Jika kamu menambahkan fitur baru, pastikan:
 
 Setiap fase penting diakhiri dengan proyek di folder `projects/`:
 
-| Proyek | Fase | Fokus | Production Elements |
-|--------|------|-------|---------------------|
-| `project_01_eda_prediksi` | 1–2 | EDA + prediksi end-to-end | FastAPI, Dockerfile, tests |
-| `project_02_klasifikasi_sinyal` | 3 | Klasifikasi sensor dengan domain knowledge EE | MLflow tracking, Hydra config |
-| `project_03_computer_vision` | 4 | CNN/RNN untuk image atau sinyal | Docker, ONNX export, Streamlit demo |
-| `project_04_nlp_pipeline` | 5 | NLP dengan Transformer/BERT | FastAPI, Gradio demo, HF Hub |
-| `project_05_end_to_end` | 6–8 | Sistem ML production-ready (FLAGSHIP) | API + Docker + monitoring + CI/CD |
+| Proyek                          | Fase | Fokus                                         | Production Elements                 |
+| ------------------------------- | ---- | --------------------------------------------- | ----------------------------------- |
+| `project_01_eda_prediksi`       | 1–2  | EDA + prediksi end-to-end                     | FastAPI, Dockerfile, tests          |
+| `project_02_klasifikasi_sinyal` | 3    | Klasifikasi sensor dengan domain knowledge EE | MLflow tracking, Hydra config       |
+| `project_03_computer_vision`    | 4    | CNN/RNN untuk image atau sinyal               | Docker, ONNX export, Streamlit demo |
+| `project_04_nlp_pipeline`       | 5    | NLP dengan Transformer/BERT                   | FastAPI, Gradio demo, HF Hub        |
+| `project_05_end_to_end`         | 6–8  | Sistem ML production-ready (FLAGSHIP)         | API + Docker + monitoring + CI/CD   |
 
 Setiap proyek memiliki `README.md` dengan checklist.  
 **Aturan:** setiap proyek HARUS memiliki README yang menjelaskan approach & hasil.
@@ -258,12 +279,13 @@ Setiap proyek memiliki `README.md` dengan checklist.
 - **Pertahankan bahasa Indonesia** untuk semua komentar, docstring, dan pesan error.
 - **Pertahankan struktur file**: header `===`, penanda `📖`/`🏋️`/`🔥`, dan pesan akhir modul.
 - **Jika menambahkan modul baru**, ikuti konvensi penamaan `{nomor}_{nama_snake_case}.py`.
-- **Jika menambahkan exercise**, berikan assertion atau test case yang jelas.
+- **Jika menambahkan exercise**, gunakan stub `raise NotImplementedError` (jangan di-comment-out) + test runner `exercise_utils.py` (mode `--exercise`), supaya ada feedback PASS/FAIL.
+- **Jangan menaruh jawaban di file modul** — referensi jawaban ditaruh di `solutions/` dengan nama `{nomor}_{nama}_solutions.py` (safety net, bukan pengganti latihan).
 - **Jika memodifikasi kode visualisasi**, pastikan `plt.savefig()` tetap ada dan nama file konsisten.
 - Repository ini hanya memiliki **1 commit** (`first commit`) — jangan melakukan `git commit` atau `git push` kecuali secara eksplisit diminta oleh user.
-- **Modul baru (07-career-prep, 08-production-ml)** menggunakan format yang sama dengan modul existing — pertahankan konsistensi.
+- **Modul baru (07-production-ml, 08-career-prep)** menggunakan format yang sama dengan modul existing — pertahankan konsistensi.
 - **File `90-day-action-plan.md`** adalah dokumen panduan jadwal — gunakan bahasa Indonesia yang conversational dan motivational.
 
 ---
 
-*File ini di-generate berdasarkan eksplorasi menyeluruh terhadap seluruh isi repository. Versi ini di-update untuk ML Engineer track.*
+_File ini di-generate berdasarkan eksplorasi menyeluruh terhadap seluruh isi repository. Versi ini di-update untuk ML Engineer track._

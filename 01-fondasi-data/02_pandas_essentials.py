@@ -920,7 +920,7 @@ Contoh insight yang baik:
 
 
 # ===========================================================
-# CHALLENGE: Pipeline Otomatis
+# 🔥 CHALLENGE: Pipeline Otomatis
 # ===========================================================
 """
 TARGET Learning Objectives:

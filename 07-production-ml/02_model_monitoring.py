@@ -1,6 +1,6 @@
 """
 =============================================================
-FASE 8 - MODUL 2: MODEL MONITORING
+FASE 7 - MODUL 2: MODEL MONITORING
 =============================================================
 Model monitoring = memastikan model bekerja dengan baik
 setelah deployment.
@@ -687,7 +687,7 @@ TARGET EXPECTED OUTPUT:
 
 
 # ===========================================================
-# CHALLENGE: Production Monitoring System
+# 🔥 CHALLENGE: Production Monitoring System
 # ===========================================================
 """
 TARGET Learning Objectives:
@@ -802,5 +802,5 @@ Monitoring adalah kunci untuk production ML success!
 """
 
 print("\n" + "="*50)
-print("OK Modul selesai! Lanjut ke: 08-production-ml/03_llm_engineering.py")
+print("OK Modul selesai! Lanjut ke: 07-production-ml/03_llm_engineering.py")
 print("="*50)

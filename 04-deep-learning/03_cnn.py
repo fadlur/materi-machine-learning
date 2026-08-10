@@ -579,7 +579,7 @@ class SignalCNN1D(nn.Module):
 
 
 # ===========================================================
-# LATIHAN 13: CNN Mastery
+# 🏋️ EXERCISE 1: CNN Mastery
 # ===========================================================
 """
 TARGET Learning Objectives:
@@ -704,7 +704,7 @@ TARGET EXPECTED OUTPUT:
 
 
 # ===========================================================
-# CHALLENGE: CNN untuk Power Quality Classification
+# 🔥 CHALLENGE: CNN untuk Power Quality Classification
 # ===========================================================
 """
 TARGET Learning Objectives:

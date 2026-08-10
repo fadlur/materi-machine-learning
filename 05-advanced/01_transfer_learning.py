@@ -630,7 +630,7 @@ TARGET EXPECTED OUTPUT:
 
 
 # ===========================================================
-# CHALLENGE: Transfer Learning untuk Industrial Inspection
+# 🔥 CHALLENGE: Transfer Learning untuk Industrial Inspection
 # ===========================================================
 """
 TARGET Learning Objectives:

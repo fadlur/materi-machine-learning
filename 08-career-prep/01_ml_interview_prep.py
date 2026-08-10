@@ -1,6 +1,6 @@
 """
 =============================================================
-FASE 7 - MODUL 1: ML INTERVIEW PREPARATION
+FASE 8 - MODUL 1: ML INTERVIEW PREPARATION
 =============================================================
 Interview ML Engineer biasanya mencakup:
 1. Coding interview (algorithms + ML implementation)
@@ -686,7 +686,7 @@ Latihan membuat perfect!
 
 
 # ===========================================================
-# CHALLENGE: 100 ML Questions
+# 🔥 CHALLENGE: 100 ML Questions
 # ===========================================================
 """
 TARGET Learning Objectives:
@@ -816,5 +816,5 @@ Persistence is key - jangan menyerah!
 """
 
 print("\n" + "="*50)
-print("OK Modul selesai! Lanjut ke: 07-career-prep/02_ml_system_design.py")
+print("OK Modul selesai! Lanjut ke: 08-career-prep/02_ml_system_design.py")
 print("="*50)

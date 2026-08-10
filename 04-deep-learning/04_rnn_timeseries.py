@@ -511,7 +511,7 @@ class PositionalEncoding(nn.Module):
 
 
 # ===========================================================
-# LATIHAN EXERCISE 14: Sequential Models Mastery
+# 🏋️ EXERCISE 1: Sequential Models Mastery
 # ===========================================================
 """
 TARGET Learning Objectives:
@@ -639,7 +639,7 @@ TARGET EXPECTED OUTPUT:
 
 
 # ===========================================================
-# CHALLENGE CHALLENGE: Transformer untuk Fault Prediction
+# 🔥 CHALLENGE: Transformer untuk Fault Prediction
 # ===========================================================
 """
 TARGET Learning Objectives:

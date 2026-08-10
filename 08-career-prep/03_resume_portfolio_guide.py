@@ -1,6 +1,6 @@
 """
 =============================================================
-FASE 7 - MODUL 3: RESUME DAN PORTFOLIO GUIDE
+FASE 8 - MODUL 3: RESUME DAN PORTFOLIO GUIDE
 =============================================================
 Resume dan portfolio adalah GATEWAY ke interview.
 Tanpa yang bagus, skills-mu tidak akan terlihat.
@@ -794,7 +794,7 @@ Your career is in your hands - make it count!
 
 
 # ===========================================================
-# CHALLENGE: 90-Day Job Search Sprint
+# 🔥 CHALLENGE: 90-Day Job Search Sprint
 # ===========================================================
 """
 TARGET Learning Objectives:
@@ -904,7 +904,7 @@ You got this!
 """
 
 print("\n" + "="*50)
-print("SELESAI FASE 7!")
+print("SELESAI FASE 8!")
 print("="*50)
 print("""
 Kamu sekarang siap untuk:
@@ -919,5 +919,5 @@ Sebelum lanjut:
 2. Practice mock interviews
 3. Start job applications
 
-Lanjut ke: 08-production-ml/01_feature_stores.py
+Lanjut ke: Fase 9 - Apply & Iterate (lihat README.md)
 """)

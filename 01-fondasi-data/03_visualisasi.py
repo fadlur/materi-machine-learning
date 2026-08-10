@@ -861,7 +861,7 @@ print("Saved: 07_feature_importance.png")
 
 
 # ===========================================================
-# LATIHAN 3: Visualization Dashboard
+# 🏋️ EXERCISE 1: Visualization Dashboard
 # ===========================================================
 """
 TARGET Learning Objectives:
@@ -873,7 +873,7 @@ PANDUAN LANGKAH-LANGKAH:
 
 STEP 1: Pilih Dataset
 ---------------------
-Gunakan dataset dari Exercise 2 (Titanic atau Power Consumption)
+Gunakan dataset dari modul sebelumnya (Titanic atau Power Consumption)
 atau generate synthetic data yang relevan.
 
 
@@ -955,7 +955,7 @@ TARGET EXPECTED OUTPUT:
 
 
 # ===========================================================
-# CHALLENGE: Spectrogram Visualization
+# 🔥 CHALLENGE: Spectrogram Visualization
 # ===========================================================
 """
 TARGET Learning Objectives:

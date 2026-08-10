@@ -1111,8 +1111,19 @@ PERINGATAN COMMON MISTAKES:
 TEST VERIFICATION:
    ```python
    # Semua model harus mencapai R^2 > 0.9 pada data linear dengan noise kecil
-   X_test, y_test, _, _ = generate_linear_data(100, 3, noise=0.1)
-   for name, model in [('GD', model_gd), ('SGD', model_sgd), ('MiniBatch', model_mb)]:
+   # PENTING: generate SATU dataset lalu split. Jika train/test di-generate
+   # terpisah, true_weights-nya BEDA -> model men-fit relasi A tapi dievaluasi
+   # pada relasi B -> R^2 bisa negatif padahal model sebenarnya benar.
+   X, y, _, _ = generate_linear_data(300, 3, noise=0.1)
+   X_train, y_train = X[:200], y[:200]
+   X_test, y_test = X[200:], y[200:]
+   models = {
+       'GD': LinearRegressionGD(learning_rate=0.01, n_iterations=1000),
+       'SGD': LinearRegressionSGD(learning_rate=0.005, n_epochs=100),
+       'MiniBatch': LinearRegressionMiniBatch(learning_rate=0.01, n_epochs=100, batch_size=32),
+   }
+   for name, model in models.items():
+       model.fit(X_train, y_train)
        print(f"{name}: R^2 = {model.score(X_test, y_test):.4f}")
    ```
 
@@ -1125,7 +1136,7 @@ TARGET EXPECTED INSIGHTS:
 
 
 # ===========================================================
-# CHALLENGE: Multivariate Regression untuk Sensor Data
+# 🔥 CHALLENGE: Multivariate Regression untuk Sensor Data
 # ===========================================================
 """
 TARGET Learning Objectives:

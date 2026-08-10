@@ -989,7 +989,7 @@ TARGET EXPECTED OUTPUT:
 
 
 # ===========================================================
-# CHALLENGE: Fault Detection System
+# 🔥 CHALLENGE: Fault Detection System
 # ===========================================================
 """
 TARGET Learning Objectives:
